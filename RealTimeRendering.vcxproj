@@ -165,17 +165,25 @@
     <ClCompile Include="ext\imgui-docking\imgui_widgets.cpp" />
     <ClCompile Include="ext\stb\stb_image.cpp" />
     <ClCompile Include="ext\tinyobjloader\tiny_obj_loader.cpp" />
+    <ClCompile Include="src\loadModel.cpp" />
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\lights\pointLight.cpp" />
     <ClCompile Include="src\renderer\ebo.cpp" />
     <ClCompile Include="src\renderer\frameBuffer.cpp" />
     <ClCompile Include="src\renderer\lightFrameBuffer.cpp" />
+    <ClCompile Include="src\renderer\meshRenderer.cpp" />
     <ClCompile Include="src\renderer\shaderProgram.cpp" />
     <ClCompile Include="src\renderer\texture.cpp" />
     <ClCompile Include="src\renderer\vao.cpp" />
     <ClCompile Include="src\renderer\vbo.cpp" />
+    <ClCompile Include="src\transform.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="SDL2.dll" />
+    <None Include="src\shaders\default.frag" />
+    <None Include="src\shaders\default.vert" />
+    <None Include="src\shaders\light.frag" />
+    <None Include="src\shaders\light.vert" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ext\glad\include\glad\glad.h" />
@@ -191,15 +199,18 @@
     <ClInclude Include="ext\stb\stb_image.h" />
     <ClInclude Include="ext\tinyobjloader\tiny_obj_loader.h" />
     <ClInclude Include="src\input.h" />
+    <ClInclude Include="src\lights\pointLight.h" />
     <ClInclude Include="src\loadModel.h" />
     <ClInclude Include="src\renderer\ebo.h" />
     <ClInclude Include="src\renderer\frameBuffer.h" />
     <ClInclude Include="src\renderer\light.h" />
     <ClInclude Include="src\renderer\lightFrameBuffer.h" />
+    <ClInclude Include="src\renderer\meshRenderer.h" />
     <ClInclude Include="src\renderer\shaderProgram.h" />
     <ClInclude Include="src\renderer\texture.h" />
     <ClInclude Include="src\renderer\vao.h" />
     <ClInclude Include="src\renderer\vbo.h" />
+    <ClInclude Include="src\transform.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -8,9 +8,13 @@
 #include "input.h"
 #include "loadModel.h"
 #include "renderer/shaderProgram.h"
+#include "renderer/vbo.h"
 #include "renderer/vao.h"
-#include "glm/gtc/type_ptr.hpp"
 #include <renderer/ebo.h>
+#include "glm/gtc/type_ptr.hpp"
+#include "renderer/meshRenderer.h"
+#include "lights/pointLight.h"
+#include "transform.h"
 
 int width = 800;
 int height = 600;
@@ -65,54 +69,31 @@ int main(int argc, char* args[]) {
 	const char* glslVersion = "#version 330";
 	ImGui_ImplOpenGL3_Init(glslVersion);
 
-	std::string modelPath = "C:\\Sarthak\\programming\\VulkanGraphicsEngine\\assets\\viking_room.obj";
-	// std::string modelPath = "C:\\Sarthak\\programming\\RealTimeRendering\\src\\assets\\cube.obj";
-	std::vector<Vertex> vertices;
-	std::vector<unsigned int> indicies;
-	loadModel(modelPath, vertices, indicies);
-
-	std::string texPath = "C:\\Sarthak\\programming\\VulkanGraphicsEngine\\assets\\viking_room.png";
-	Texture texture(texPath.c_str(), 0);
-
-	const std::string vertPath = "C:\\Sarthak\\programming\\RealTimeRendering\\src\\default.vert";
-	const std::string fragPath = "C:\\Sarthak\\programming\\RealTimeRendering\\src\\default.frag";
+	const std::string vertPath = "C:\\Sarthak\\programming\\RealTimeRendering\\src\\shaders\\default.vert";
+	const std::string fragPath = "C:\\Sarthak\\programming\\RealTimeRendering\\src\\shaders\\default.frag";
 	ShaderProgram shaderProgram(vertPath.c_str(), fragPath.c_str());
 
-	texture.bind();
 	shaderProgram.setInt("tex", 0);
 
 	float radius = 10.0f;
 	float yPos = 5.0f;
 	float angle = 0.0f;
-	glm::vec3 pos(radius * cos(glm::radians(angle)), yPos, radius * sin(glm::radians(angle)));
-	glm::mat4 view = glm::lookAt(pos, glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
-	shaderProgram.setMat4("view", view);
+	glm::vec3 lookAt(0.0f, 0.0f, 0.0f);
 	glm::mat4 proj = glm::perspective(glm::radians(45.0f), ((float)width) / height, 0.1f, 100.0f);
+
 	shaderProgram.setMat4("projection", proj);
 
-	VAO vao;
-	VBO vbo;
+	std::string vikingModelPath = "C:\\Sarthak\\programming\\VulkanGraphicsEngine\\assets\\viking_room.obj";
+	std::string vikingTexPath = "C:\\Sarthak\\programming\\VulkanGraphicsEngine\\assets\\viking_room.png";
+	MeshRenderer vikingMeshRenderer(vikingModelPath, vikingTexPath, shaderProgram);
+	Transform vikingTransform;
+	vikingTransform.scale = 2.0f;
+	vikingTransform.pos = glm::vec3(0.0f, 0.0f, 0.0f);
+	vikingTransform.rot.x = -90.0f;
 
-#if USE_EBO == 1
-
-	EBO ebo;
-	ebo.setData((unsigned int*)&indicies[0], indicies.size() * sizeof(indicies[0]), GL_STATIC_DRAW);
-#endif
-	vbo.setData((float*)&vertices[0], vertices.size() * sizeof(Vertex), GL_STATIC_DRAW);
-
-	vao.bind();
-#if USE_EBO == 1
-	ebo.bind();
-#endif
-	vao.attachVBO(vbo, 0, 3, sizeof(Vertex), offsetof(Vertex, pos));
-	vao.attachVBO(vbo, 1, 3, sizeof(Vertex), offsetof(Vertex, color));
-	vao.attachVBO(vbo, 2, 2, sizeof(Vertex), offsetof(Vertex, texCoord));
-
-	vao.unbind();
-	vbo.unbind();
-#if USE_EBO == 1
-	ebo.unbind();
-#endif
+	std::string cubeModelPath = "C:\\Sarthak\\programming\\RealTimeRendering\\src\\assets\\cube.obj";
+	std::string cubeTexPath = "C:\\Sarthak\\programming\\RealTimeRendering\\src\\assets\\cube.png";
+	MeshRenderer cubeMeshRenderer(cubeModelPath, cubeTexPath, shaderProgram);
 
 	Input input;
 	bool running = true;
@@ -126,8 +107,11 @@ int main(int argc, char* args[]) {
 
 	uint32_t prev = SDL_GetTicks();
 
-	glm::vec3 rot{};
-	rot.x = -90.0f;
+	glm::vec3 pointLightColor(glm::vec3(1, 0, 0));
+	glm::vec3 pointLightPos(glm::vec3(0, 3, 0));
+	PointLight pointLight(pointLightColor, pointLightPos, 20.0f, 3.0f);
+
+	pointLight.shaderProgram.setMat4("projection", proj);
 
 	while (running) {
 		uint32_t cur = SDL_GetTicks();
@@ -165,26 +149,43 @@ int main(int argc, char* args[]) {
 		ImGui_ImplSDL2_NewFrame();
 		ImGui::NewFrame();
 
-		rot.z = runningAngle;
+		// rot.z = runningAngle;
 
-		glm::mat4 model(1.0f);
-		model = glm::scale(model, glm::vec3(3.0f));
-		model = glm::rotate(model, glm::radians(rot.x), glm::vec3(1.0f, 0.0f, 0.0f));
-		model = glm::rotate(model, glm::radians(rot.y), glm::vec3(0.0f, 1.0f, 0.0f));
-		model = glm::rotate(model, glm::radians(rot.z), glm::vec3(0.0f, 0.0f, 1.0f));
-		shaderProgram.setMat4("model", model);
+		glm::vec3 camPos(radius * cos(glm::radians(angle)), yPos, radius * sin(glm::radians(angle)));
+		glm::mat4 view = glm::lookAt(camPos, lookAt, glm::vec3(0, 1, 0));
+		shaderProgram.setMat4("view", view);
+		pointLight.shaderProgram.setMat4("view", view);
 
-		shaderProgram.bind();
-		vao.bind();
-#if USE_EBO == 1
-		glDrawElements(GL_TRIANGLES, indicies.size(), GL_UNSIGNED_INT, 0);
-#else
-		glDrawArrays(GL_TRIANGLES, 0, vertices.size());
-#endif
-		vao.unbind();
-		shaderProgram.unbind();
+		glm::mat4 vikingModel(1.0f);
+		vikingTransform.getModelMatrix(vikingModel);
+		shaderProgram.setMat4("model", vikingModel);
+		shaderProgram.setInt("numPointLights", 1);
 
-		ImGui::DragFloat3("rotation", &rot.x, 1, -180.0f, 180.0f);
+		pointLight.setPointLightInShader(shaderProgram, 0);
+
+		vikingMeshRenderer.render();
+		pointLight.debugRender();
+
+		ImGui::Begin("Viking Transform");
+		ImGui::DragFloat3("transform", &vikingTransform.pos.x);
+		ImGui::DragFloat("scale", &vikingTransform.scale);
+		ImGui::DragFloat3("rotation", &vikingTransform.rot.x, 1, -180.0f, 180.0f);
+		ImGui::End();
+
+		ImGui::Begin("Camera");
+		// ImGui::DragFloat3("transform", &camPos.x);
+		ImGui::DragFloat("angle", &angle, 1, -180.0f, 180.0f);
+		ImGui::DragFloat("y pos", &yPos);
+		ImGui::DragFloat("radius", &radius);
+		ImGui::DragFloat3("look at", &lookAt.x);
+		ImGui::End();
+
+		ImGui::Begin("Light");
+		ImGui::DragFloat3("pos", &pointLight.position.x, 0.1);
+		ImGui::ColorPicker3("color", &pointLight.color.r);
+		ImGui::DragFloat("max dist", &pointLight.maxDist, 0.1, 1);
+		ImGui::DragFloat("multiplier", &pointLight.multiplier, 0.05, 0);
+		ImGui::End();
 
 		glViewport(0, 0, (int)io.DisplaySize.x, (int)io.DisplaySize.y);
 		ImGui::Render();
