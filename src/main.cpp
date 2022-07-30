@@ -15,6 +15,7 @@
 #include "renderer/meshRenderer.h"
 #include "lights/pointLight.h"
 #include "lights/directionalLight.h"
+#include "lights/spotLight.h"
 #include "transform.h"
 
 int width = 800;
@@ -116,6 +117,11 @@ int main(int argc, char* args[]) {
 	glm::vec3 dir(0, -1, 0);
 	DirectionalLight directionalLight(dirLightColor, dir, 1.0f);
 
+	glm::vec3 spotLightColor(0, 1, 0);
+	glm::vec3 spotLightPos(0, 4, 0);
+	glm::vec3 spotLightDir(0, -1, 0);
+	SpotLight spotLight(spotLightColor, spotLightPos, spotLightDir, 2.0f, glm::radians(60.0f), glm::radians(45.0f));
+
 	pointLight.shaderProgram.setMat4("projection", proj);
 
 	while (running) {
@@ -170,6 +176,7 @@ int main(int argc, char* args[]) {
 
 		pointLight.setPointLightInShader(shaderProgram, 0);
 		directionalLight.setDirectionalLightInShader(shaderProgram, 0);
+		spotLight.setSpotLightInShader(shaderProgram, 0);
 
 		vikingMeshRenderer.render();
 		pointLight.debugRender();
@@ -190,18 +197,25 @@ int main(int argc, char* args[]) {
 
 		ImGui::Begin("point Light");
 		ImGui::DragFloat3("pos", &pointLight.position.x, 0.1);
-		ImGui::ColorPicker3("color", &pointLight.color.r);
 		ImGui::DragFloat("max dist", &pointLight.maxDist, 0.1, 1);
 		ImGui::DragFloat("multiplier", &pointLight.multiplier, 0.05, 0);
+		ImGui::ColorPicker3("color", &pointLight.color.r);
 		ImGui::End();
 
 		ImGui::Begin("dir Light");
 		ImGui::DragFloat3("dir", &directionalLight.dir.x, 0.1);
-		ImGui::ColorPicker3("color", &directionalLight.color.r);
 		ImGui::DragFloat("multiplier", &directionalLight.multiplier, 0.05, 0);
+		ImGui::ColorPicker3("color", &directionalLight.color.r);
 		ImGui::End();
 
-
+		ImGui::Begin("spot Light");
+		ImGui::DragFloat3("dir", &spotLight.dir.x, 0.1);
+		ImGui::DragFloat3("pos", &spotLight.pos.x);
+		ImGui::DragFloat("multiplier", &spotLight.multiplier, 0.05, 0);
+		ImGui::DragFloat("umbra", &spotLight.umbra, 0.01, 0, glm::radians(90.0f));
+		ImGui::DragFloat("prenumbra", &spotLight.prenumbra, 0.01, 0, glm::radians(90.0f));
+		ImGui::ColorPicker3("color", &spotLight.color.r);
+		ImGui::End();
 
 		glViewport(0, 0, (int)io.DisplaySize.x, (int)io.DisplaySize.y);
 		ImGui::Render();
