@@ -17,5 +17,5 @@ void main() {
 	worldPos = worldPosVec4.xyz;
 	gl_Position = projection * view * worldPosVec4;
 	texCoords = aTexCoords;
-	normal = normalize(aNormal);
+	normal = normalize(model * vec4(aNormal, 1.0)).xyz;
 }

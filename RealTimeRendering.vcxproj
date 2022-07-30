@@ -165,6 +165,7 @@
     <ClCompile Include="ext\imgui-docking\imgui_widgets.cpp" />
     <ClCompile Include="ext\stb\stb_image.cpp" />
     <ClCompile Include="ext\tinyobjloader\tiny_obj_loader.cpp" />
+    <ClCompile Include="src\lights\directionalLight.cpp" />
     <ClCompile Include="src\loadModel.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\lights\pointLight.cpp" />
@@ -199,6 +200,7 @@
     <ClInclude Include="ext\stb\stb_image.h" />
     <ClInclude Include="ext\tinyobjloader\tiny_obj_loader.h" />
     <ClInclude Include="src\input.h" />
+    <ClInclude Include="src\lights\directionalLight.h" />
     <ClInclude Include="src\lights\pointLight.h" />
     <ClInclude Include="src\loadModel.h" />
     <ClInclude Include="src\renderer\ebo.h" />

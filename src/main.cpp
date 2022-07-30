@@ -14,6 +14,7 @@
 #include "glm/gtc/type_ptr.hpp"
 #include "renderer/meshRenderer.h"
 #include "lights/pointLight.h"
+#include "lights/directionalLight.h"
 #include "transform.h"
 
 int width = 800;
@@ -107,9 +108,13 @@ int main(int argc, char* args[]) {
 
 	uint32_t prev = SDL_GetTicks();
 
-	glm::vec3 pointLightColor(glm::vec3(1, 0, 0));
-	glm::vec3 pointLightPos(glm::vec3(0, 3, 0));
+	glm::vec3 pointLightColor(1, 0, 0);
+	glm::vec3 pointLightPos(0, 3, 0);
 	PointLight pointLight(pointLightColor, pointLightPos, 20.0f, 3.0f);
+
+	glm::vec3 dirLightColor(0, 0, 1);
+	glm::vec3 dir(0, -1, 0);
+	DirectionalLight directionalLight(dirLightColor, dir, 1.0f);
 
 	pointLight.shaderProgram.setMat4("projection", proj);
 
@@ -159,9 +164,12 @@ int main(int argc, char* args[]) {
 		glm::mat4 vikingModel(1.0f);
 		vikingTransform.getModelMatrix(vikingModel);
 		shaderProgram.setMat4("model", vikingModel);
+
 		shaderProgram.setInt("numPointLights", 1);
+		shaderProgram.setInt("numDirectionalLights", 1);
 
 		pointLight.setPointLightInShader(shaderProgram, 0);
+		directionalLight.setDirectionalLightInShader(shaderProgram, 0);
 
 		vikingMeshRenderer.render();
 		pointLight.debugRender();
@@ -180,12 +188,20 @@ int main(int argc, char* args[]) {
 		ImGui::DragFloat3("look at", &lookAt.x);
 		ImGui::End();
 
-		ImGui::Begin("Light");
+		ImGui::Begin("point Light");
 		ImGui::DragFloat3("pos", &pointLight.position.x, 0.1);
 		ImGui::ColorPicker3("color", &pointLight.color.r);
 		ImGui::DragFloat("max dist", &pointLight.maxDist, 0.1, 1);
 		ImGui::DragFloat("multiplier", &pointLight.multiplier, 0.05, 0);
 		ImGui::End();
+
+		ImGui::Begin("dir Light");
+		ImGui::DragFloat3("dir", &directionalLight.dir.x, 0.1);
+		ImGui::ColorPicker3("color", &directionalLight.color.r);
+		ImGui::DragFloat("multiplier", &directionalLight.multiplier, 0.05, 0);
+		ImGui::End();
+
+
 
 		glViewport(0, 0, (int)io.DisplaySize.x, (int)io.DisplaySize.y);
 		ImGui::Render();
