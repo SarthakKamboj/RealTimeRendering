@@ -45,8 +45,16 @@ float windowFunc(float r, float maxDist) {
 	return pow(val, 2);
 }
 
-float fallOffFunc(float lightDistSquared) {
+float distanceFallOffFunc(float lightDistSquared) {
 	return 1.0 / (lightDistSquared + 0.1);
+}
+
+float dirFalloffFunc(vec3 lightToSurface, int i) {
+	float lDotSpot = dot(lightToSurface, normalize(spotLights[i].dir));
+	float prenumbra = spotLights[i].prenumbra;
+	float umbra = max(spotLights[i].umbra, prenumbra);
+	float t = clamp((lDotSpot - cos(umbra)) / (cos(prenumbra) - cos(umbra) + 0.1), 0, 1);
+	return pow(t, 2);
 }
 
 vec4 calcPointLight(int i, vec4 surfaceColor) {
@@ -56,7 +64,7 @@ vec4 calcPointLight(int i, vec4 surfaceColor) {
 	lightVec = lightVec / lightDist;
 	float angleMultiplier = clamp(dot(lightVec, normal), 0, 1);
 	vec3 pointColor = pointLights[i].pointColor;
-	return pointLights[i].multiplier * angleMultiplier * vec4(pointColor, 1.0) * surfaceColor * fallOffFunc(lightDistSquared) * windowFunc(lightDist, pointLights[i].maxDist);
+	return pointLights[i].multiplier * angleMultiplier * vec4(pointColor, 1.0) * surfaceColor * distanceFallOffFunc(lightDistSquared) * windowFunc(lightDist, pointLights[i].maxDist);
 }
 
 vec4 calcDirLight(int i, vec4 surfaceColor) {
@@ -69,17 +77,13 @@ vec4 calcDirLight(int i, vec4 surfaceColor) {
 vec4 calcSpotLight(int i, vec4 surfaceColor) {
 	vec3 lightToSurface = worldPos - spotLights[i].pos;
 	float lightDistSquared = dot(lightToSurface, lightToSurface);
-	lightToSurface = lightToSurface / lightDistSquared;
-	float angle = dot(lightToSurface, normalize(spotLights[i].dir));
-	float umbra = spotLights[i].umbra;
-	float prenumbra = spotLights[i].prenumbra;
-	float t = clamp((cos(angle) - cos(umbra)) / (cos(prenumbra) - cos(umbra)), 0, 1);
+	lightToSurface = lightToSurface / sqrt(lightDistSquared);
 
 	vec3 pointColor = spotLights[i].pointColor;
 	vec3 lightVec = -lightToSurface;
 	float angleMultiplier = clamp(dot(lightVec, normal), 0, 1);
 
-	return spotLights[i].multiplier * angleMultiplier * vec4(pointColor, 1.0) * surfaceColor * fallOffFunc(lightDistSquared) * pow(t,2);
+	return spotLights[i].multiplier * angleMultiplier * vec4(pointColor, 1.0) * surfaceColor * distanceFallOffFunc(lightDistSquared) * dirFalloffFunc(lightToSurface, i);
 }
 
 void main() {
@@ -88,11 +92,11 @@ void main() {
 	FragColor = surfaceColor * 0.1;
 
 	for (int i = 0; i < numPointLights; i++) {
-		// FragColor += calcPointLight(i, surfaceColor);
+		FragColor += calcPointLight(i, surfaceColor);
 	}
 
 	for (int i = 0; i < numDirectionalLights; i++) {
-		// FragColor += calcDirLight(i, surfaceColor);
+		FragColor += calcDirLight(i, surfaceColor);
 	}
 
 	for (int i = 0; i < numDirectionalLights; i++) {

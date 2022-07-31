@@ -123,6 +123,7 @@ int main(int argc, char* args[]) {
 	SpotLight spotLight(spotLightColor, spotLightPos, spotLightDir, 2.0f, glm::radians(60.0f), glm::radians(45.0f));
 
 	pointLight.shaderProgram.setMat4("projection", proj);
+	spotLight.shaderProgram.setMat4("projection", proj);
 
 	while (running) {
 		uint32_t cur = SDL_GetTicks();
@@ -166,6 +167,7 @@ int main(int argc, char* args[]) {
 		glm::mat4 view = glm::lookAt(camPos, lookAt, glm::vec3(0, 1, 0));
 		shaderProgram.setMat4("view", view);
 		pointLight.shaderProgram.setMat4("view", view);
+		spotLight.shaderProgram.setMat4("view", view);
 
 		glm::mat4 vikingModel(1.0f);
 		vikingTransform.getModelMatrix(vikingModel);
@@ -180,6 +182,7 @@ int main(int argc, char* args[]) {
 
 		vikingMeshRenderer.render();
 		pointLight.debugRender();
+		spotLight.debugRender();
 
 		ImGui::Begin("Viking Transform");
 		ImGui::DragFloat3("transform", &vikingTransform.pos.x);
@@ -190,7 +193,7 @@ int main(int argc, char* args[]) {
 		ImGui::Begin("Camera");
 		// ImGui::DragFloat3("transform", &camPos.x);
 		ImGui::DragFloat("angle", &angle, 1, -180.0f, 180.0f);
-		ImGui::DragFloat("y pos", &yPos);
+		ImGui::DragFloat("y pos", &yPos, 0.1);
 		ImGui::DragFloat("radius", &radius);
 		ImGui::DragFloat3("look at", &lookAt.x);
 		ImGui::End();
@@ -210,7 +213,7 @@ int main(int argc, char* args[]) {
 
 		ImGui::Begin("spot Light");
 		ImGui::DragFloat3("dir", &spotLight.dir.x, 0.1);
-		ImGui::DragFloat3("pos", &spotLight.pos.x);
+		ImGui::DragFloat3("pos", &spotLight.pos.x, 0.1);
 		ImGui::DragFloat("multiplier", &spotLight.multiplier, 0.05, 0);
 		ImGui::DragFloat("umbra", &spotLight.umbra, 0.01, 0, glm::radians(90.0f));
 		ImGui::DragFloat("prenumbra", &spotLight.prenumbra, 0.01, 0, glm::radians(90.0f));

@@ -12,7 +12,7 @@ SpotLight::SpotLight(const glm::vec3& _color, const glm::vec3& _position, glm::v
 	const std::string fragPath = "C:\\Sarthak\\programming\\RealTimeRendering\\src\\shaders\\light.frag";
 	shaderProgram = ShaderProgram(vertPath.c_str(), fragPath.c_str());
 
-	std::string cubePath = "C:\\Sarthak\\programming\\RealTimeRendering\\src\\assets\\arrow.obj";
+	std::string cubePath = "C:\\Sarthak\\programming\\RealTimeRendering\\src\\assets\\cube.obj";
 	loadModel(cubePath, model);
 }
 
