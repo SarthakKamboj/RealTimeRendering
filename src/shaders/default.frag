@@ -96,10 +96,10 @@ void main() {
 	}
 
 	for (int i = 0; i < numDirectionalLights; i++) {
-		FragColor += calcDirLight(i, surfaceColor);
+		 FragColor += calcDirLight(i, surfaceColor);
 	}
 
-	for (int i = 0; i < numDirectionalLights; i++) {
+	for (int i = 0; i < numSpotLights; i++) {
 		FragColor += calcSpotLight(i, surfaceColor);
 	}
 }

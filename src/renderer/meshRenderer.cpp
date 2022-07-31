@@ -26,10 +26,13 @@ MeshRenderer::MeshRenderer(const std::string& modelPath, const std::string& texP
 
 void MeshRenderer::render() {
 	texture.bind();
-
 	shaderProgram.bind();
+	/*
 	model.vao.bind();
 	glDrawElements(GL_TRIANGLES, model.indicies.size(), GL_UNSIGNED_INT, 0);
 	model.vao.unbind();
+	*/
+	model.render();
 	shaderProgram.unbind();
+	texture.unbind();
 }

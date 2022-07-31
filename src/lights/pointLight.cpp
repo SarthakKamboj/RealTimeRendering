@@ -6,8 +6,8 @@ PointLight::PointLight(const glm::vec3& _color, const glm::vec3& _position, floa
 	color = _color;
 	position = _position;
 
-	const std::string vertPath = "C:\\Sarthak\\programming\\RealTimeRendering\\src\\shaders\\light.vert";
-	const std::string fragPath = "C:\\Sarthak\\programming\\RealTimeRendering\\src\\shaders\\light.frag";
+	const std::string vertPath = "C:\\Sarthak\\programming\\RealTimeRendering\\src\\shaders\\lightDebug.vert";
+	const std::string fragPath = "C:\\Sarthak\\programming\\RealTimeRendering\\src\\shaders\\lightDebug.frag";
 	shaderProgram = ShaderProgram(vertPath.c_str(), fragPath.c_str());
 
 	std::string cubePath = "C:\\Sarthak\\programming\\RealTimeRendering\\src\\assets\\cube.obj";
@@ -33,8 +33,11 @@ void PointLight::debugRender() {
 	shaderProgram.setVec3("color", color);
 
 	shaderProgram.bind();
+	/*
 	model.vao.bind();
 	glDrawElements(GL_TRIANGLES, model.indicies.size(), GL_UNSIGNED_INT, 0);
 	model.vao.unbind();
+	*/
+	model.render();
 	shaderProgram.unbind();
 }

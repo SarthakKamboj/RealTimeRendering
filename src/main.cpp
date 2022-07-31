@@ -17,6 +17,19 @@
 #include "lights/directionalLight.h"
 #include "lights/spotLight.h"
 #include "transform.h"
+#include "renderer/lightFrameBuffer.h"
+#include "renderer/frameBuffer.h"
+
+static float quadVertices[] = {
+	// positions   // texCoords
+	-1.0f,  1.0f,  0.0f, 1.0f,
+	-1.0f, -1.0f,  0.0f, 0.0f,
+	 1.0f, -1.0f,  1.0f, 0.0f,
+
+	-1.0f,  1.0f,  0.0f, 1.0f,
+	 1.0f, -1.0f,  1.0f, 0.0f,
+	 1.0f,  1.0f,  1.0f, 1.0f
+};
 
 int width = 800;
 int height = 600;
@@ -88,6 +101,7 @@ int main(int argc, char* args[]) {
 	std::string vikingModelPath = "C:\\Sarthak\\programming\\VulkanGraphicsEngine\\assets\\viking_room.obj";
 	std::string vikingTexPath = "C:\\Sarthak\\programming\\VulkanGraphicsEngine\\assets\\viking_room.png";
 	MeshRenderer vikingMeshRenderer(vikingModelPath, vikingTexPath, shaderProgram);
+
 	Transform vikingTransform;
 	vikingTransform.scale = 2.0f;
 	vikingTransform.pos = glm::vec3(0.0f, 0.0f, 0.0f);
@@ -97,15 +111,13 @@ int main(int argc, char* args[]) {
 	std::string cubeTexPath = "C:\\Sarthak\\programming\\RealTimeRendering\\src\\assets\\cube.png";
 	MeshRenderer cubeMeshRenderer(cubeModelPath, cubeTexPath, shaderProgram);
 
+	Transform cubeTransform;
+	cubeTransform.scale = 0.3f;
+	cubeTransform.pos = glm::vec3(0.0f, 1.0f, 0.0f);
+	cubeTransform.rot.x = -90.0f;
+
 	Input input;
 	bool running = true;
-
-	float anglePerSec = 90.0f;
-	float runningAngle = 0.0f;
-
-	glm::vec3 rotArr[3] = { glm::vec3(1,0,0), glm::vec3(0,1,0), glm::vec3(0,0,1) };
-
-	int rotIdx = 0;
 
 	uint32_t prev = SDL_GetTicks();
 
@@ -118,24 +130,45 @@ int main(int argc, char* args[]) {
 	DirectionalLight directionalLight(dirLightColor, dir, 1.0f);
 
 	glm::vec3 spotLightColor(0, 1, 0);
-	glm::vec3 spotLightPos(0, 4, 0);
+	glm::vec3 spotLightPos(0, 4, 0.2f);
 	glm::vec3 spotLightDir(0, -1, 0);
 	SpotLight spotLight(spotLightColor, spotLightPos, spotLightDir, 2.0f, glm::radians(60.0f), glm::radians(45.0f));
 
 	pointLight.shaderProgram.setMat4("projection", proj);
 	spotLight.shaderProgram.setMat4("projection", proj);
 
+	LightFrameBuffer spotLightFrameBuffer;
+	FrameBuffer spotLightDebugFB;
+
+	const std::string lightPassVertPath = "C:\\Sarthak\\programming\\RealTimeRendering\\src\\shaders\\lightPass.vert";
+	const std::string lightPassFragPath = "C:\\Sarthak\\programming\\RealTimeRendering\\src\\shaders\\lightPass.frag";
+	ShaderProgram lightPassShaderProgram(lightPassVertPath.c_str(), lightPassFragPath.c_str());
+
+	const std::string lightDepthRenderVert = "C:\\Sarthak\\programming\\RealTimeRendering\\src\\shaders\\lightDepthRender.vert";
+	const std::string lightDepthRenderFrag = "C:\\Sarthak\\programming\\RealTimeRendering\\src\\shaders\\lightDepthRender.frag";
+	ShaderProgram lightPassRenderProg(lightDepthRenderVert.c_str(), lightDepthRenderFrag.c_str());
+	lightPassRenderProg.setInt("depthTexUnit", 0);
+	Model lightPassRenderModel;
+	for (int i = 0; i < sizeof(quadVertices) / sizeof(float) / 4; i++) {
+		Vertex vertex{};
+		vertex.pos = glm::vec3(quadVertices[i * 4 + 0], quadVertices[i * 4 + 1], 0.0f);
+		vertex.texCoord = glm::vec2(quadVertices[i * 4 + 2], quadVertices[i * 4 + 3]);
+		lightPassRenderModel.vertices.push_back(vertex);
+	}
+	lightPassRenderModel.indexEnabled = false;
+	VBO& lVbo = lightPassRenderModel.vbo;
+	VAO& lVao = lightPassRenderModel.vao;
+
+	lVbo.setData((float*)&lightPassRenderModel.vertices[0], lightPassRenderModel.vertices.size() * sizeof(Vertex), GL_STATIC_DRAW);
+	lVao.bind();
+	lVao.attachVBO(lVbo, 0, 3, sizeof(Vertex), offsetof(Vertex, pos));
+	lVao.attachVBO(lVbo, 1, 2, sizeof(Vertex), offsetof(Vertex, texCoord));
+	lVao.unbind();
+
 	while (running) {
 		uint32_t cur = SDL_GetTicks();
 		float timeElapsed = ((cur - prev) / 1000.0f);
 		prev = cur;
-
-		runningAngle += (timeElapsed * anglePerSec);
-
-		if (runningAngle >= 360.0f) {
-			runningAngle = 0.0f;
-			rotIdx = (rotIdx + 1) % 3;
-		}
 
 		SDL_Event event;
 		while (SDL_PollEvent(&event)) {
@@ -153,45 +186,91 @@ int main(int argc, char* args[]) {
 			}
 		}
 
-		glClearColor(0, 0, 0, 1);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		glViewport(0, 0, width, height);
-
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplSDL2_NewFrame();
 		ImGui::NewFrame();
 
-		// rot.z = runningAngle;
-
 		glm::vec3 camPos(radius * cos(glm::radians(angle)), yPos, radius * sin(glm::radians(angle)));
-		glm::mat4 view = glm::lookAt(camPos, lookAt, glm::vec3(0, 1, 0));
-		shaderProgram.setMat4("view", view);
-		pointLight.shaderProgram.setMat4("view", view);
-		spotLight.shaderProgram.setMat4("view", view);
+		glm::mat4 camView = glm::lookAt(camPos, lookAt, glm::vec3(0, 1, 0));
+
+		glm::mat4 cubeModel(1.0f);
+		cubeTransform.getModelMatrix(cubeModel);
 
 		glm::mat4 vikingModel(1.0f);
 		vikingTransform.getModelMatrix(vikingModel);
-		shaderProgram.setMat4("model", vikingModel);
 
-		shaderProgram.setInt("numPointLights", 1);
-		shaderProgram.setInt("numDirectionalLights", 1);
+		// spot light pass
+		spotLightFrameBuffer.bind();
+		FrameBuffer::ClearBuffers(glm::vec3(0, 0, 0));
+
+		lightPassShaderProgram.setMat4("view", spotLightFrameBuffer.getLightViewMat(spotLight.pos, spotLight.dir));
+		lightPassShaderProgram.setMat4("projection", spotLightFrameBuffer.getSpotLightProjMat(spotLight.umbra));
+
+		lightPassShaderProgram.setMat4("model", vikingModel);
+		lightPassShaderProgram.bind();
+		vikingMeshRenderer.model.render();
+		// vikingMeshRenderer.render();
+		lightPassShaderProgram.unbind();
+
+		lightPassShaderProgram.setMat4("model", cubeModel);
+		lightPassShaderProgram.bind();
+		cubeMeshRenderer.model.render();
+		// cubeMeshRenderer.render();
+		lightPassShaderProgram.unbind();
+
+		spotLightFrameBuffer.unbind();
+
+
+		// spotlight debug pass
+		spotLightDebugFB.bind();
+		FrameBuffer::ClearBuffers(glm::vec3(0, 0, 0));
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, spotLightFrameBuffer.depthTexture);
+		lightPassRenderProg.bind();
+		lightPassRenderModel.render();
+		lightPassRenderProg.unbind();
+		spotLightDebugFB.unbind();
+
+
+		// full color pass
+		glClearColor(0, 0, 0, 1);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glViewport(0, 0, width, height);
+
+		shaderProgram.setMat4("view", camView);
+		pointLight.shaderProgram.setMat4("view", camView);
+		spotLight.shaderProgram.setMat4("view", camView);
+
+		shaderProgram.setInt("numPointLights", 0);
+		shaderProgram.setInt("numDirectionalLights", 0);
+		shaderProgram.setInt("numSpotLights", 1);
 
 		pointLight.setPointLightInShader(shaderProgram, 0);
 		directionalLight.setDirectionalLightInShader(shaderProgram, 0);
 		spotLight.setSpotLightInShader(shaderProgram, 0);
 
+		shaderProgram.setMat4("model", vikingModel);
 		vikingMeshRenderer.render();
+
+		shaderProgram.setMat4("model", cubeModel);
+		cubeMeshRenderer.render();
+
 		pointLight.debugRender();
 		spotLight.debugRender();
 
 		ImGui::Begin("Viking Transform");
-		ImGui::DragFloat3("transform", &vikingTransform.pos.x);
-		ImGui::DragFloat("scale", &vikingTransform.scale);
+		ImGui::DragFloat3("transform", &vikingTransform.pos.x, 0.1f);
+		ImGui::DragFloat("scale", &vikingTransform.scale, 0.1f);
 		ImGui::DragFloat3("rotation", &vikingTransform.rot.x, 1, -180.0f, 180.0f);
 		ImGui::End();
 
+		ImGui::Begin("cube Transform");
+		ImGui::DragFloat3("transform", &cubeTransform.pos.x, 0.1f);
+		ImGui::DragFloat("scale", &cubeTransform.scale, 0.1f);
+		ImGui::DragFloat3("rotation", &cubeTransform.rot.x, 1, -180.0f, 180.0f);
+		ImGui::End();
+
 		ImGui::Begin("Camera");
-		// ImGui::DragFloat3("transform", &camPos.x);
 		ImGui::DragFloat("angle", &angle, 1, -180.0f, 180.0f);
 		ImGui::DragFloat("y pos", &yPos, 0.1);
 		ImGui::DragFloat("radius", &radius);
@@ -219,6 +298,8 @@ int main(int argc, char* args[]) {
 		ImGui::DragFloat("prenumbra", &spotLight.prenumbra, 0.01, 0, glm::radians(90.0f));
 		ImGui::ColorPicker3("color", &spotLight.color.r);
 		ImGui::End();
+
+		ImGui::Image((ImTextureID)spotLightDebugFB.colorTexture, ImVec2(width / 2.0f, height / 2.0f), ImVec2(0, 1), ImVec2(1, 0));
 
 		glViewport(0, 0, (int)io.DisplaySize.x, (int)io.DisplaySize.y);
 		ImGui::Render();

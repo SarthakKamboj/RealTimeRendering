@@ -1,5 +1,16 @@
 #include "loadModel.h"
 
+void Model::render() {
+	vao.bind();
+	if (indexEnabled) {
+		glDrawElements(GL_TRIANGLES, indicies.size(), GL_UNSIGNED_INT, 0);
+	}
+	else {
+		glDrawArrays(GL_TRIANGLES, 0, vertices.size());
+	}
+	vao.unbind();
+}
+
 void loadModel(const std::string& modelPath, Model& model) {
 	tinyobj::attrib_t attrib;
 	std::vector<tinyobj::shape_t> shapes;

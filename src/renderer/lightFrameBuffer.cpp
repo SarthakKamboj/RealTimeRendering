@@ -9,6 +9,13 @@ LightFrameBuffer::LightFrameBuffer() {
 	glGenFramebuffers(1, &fbo);
 	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 
+	glGenTextures(1, &colorTexture);
+	glBindTexture(GL_TEXTURE_2D, colorTexture);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorTexture, 0);
+
 	// create framebuffer depth texture
 	// don't need to make color texture since we will just be sampling from depth texture created
 	// by the light passes that use the lightframebuffer
@@ -31,6 +38,28 @@ void LightFrameBuffer::unbind() {
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-glm::mat4 LightFrameBuffer::getLightViewMat() {
-	return glm::lookAt(light->pos, glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
+glm::mat4 LightFrameBuffer::getLightViewMat(const glm::vec3& lightPos, const glm::vec3& lightDir) {
+	const glm::vec3 lookAtPos = lightPos + (4.0f * lightDir) + glm::vec3(0, 0, 0.1f);
+	return glm::lookAt(lightPos, lookAtPos, glm::vec3(0, 1, 0));
+	// return glm::lookAt(lightPos, glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
 }
+
+glm::mat4 LightFrameBuffer::getDirLightProjMat() {
+	return glm::ortho(0.0f, (float)width, 0.0f, (float)height, 0.1f, 100.0f);
+}
+
+glm::mat4 LightFrameBuffer::getSpotLightProjMat(float angle) {
+	return glm::perspective(angle, (float)width / (float)height, 0.1f, 100.0f);
+}
+
+/*
+glm::mat4 LightFrameBuffer::getLightProjMat(LightType lightType) {
+	if (lightType == LightType::SPOTLIGHT) {
+		// return glm::lookAt(light->pos, glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
+	}
+
+	if (lightType == LightType::DIRECTIONAL) {
+		// return glm::lookAt(light->pos, glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
+	}
+}
+*/

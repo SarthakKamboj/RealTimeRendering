@@ -27,6 +27,10 @@ struct Model {
 
 	std::vector<Vertex> vertices;
 	std::vector<unsigned int> indicies;
+
+	bool indexEnabled = true;
+
+	void render();
 };
 
 namespace std {

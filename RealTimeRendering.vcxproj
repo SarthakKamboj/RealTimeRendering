@@ -184,8 +184,12 @@
     <None Include="SDL2.dll" />
     <None Include="src\shaders\default.frag" />
     <None Include="src\shaders\default.vert" />
-    <None Include="src\shaders\light.frag" />
-    <None Include="src\shaders\light.vert" />
+    <None Include="src\shaders\lightDebug.frag" />
+    <None Include="src\shaders\lightDebug.vert" />
+    <None Include="src\shaders\lightDepthRender.frag" />
+    <None Include="src\shaders\lightDepthRender.vert" />
+    <None Include="src\shaders\lightPass.frag" />
+    <None Include="src\shaders\lightPass.vert" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ext\glad\include\glad\glad.h" />
