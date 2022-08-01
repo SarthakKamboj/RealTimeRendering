@@ -3,15 +3,10 @@
 out vec4 FragColor;
 
 uniform sampler2D tex;
-uniform sampler2D lightDepthTexUnit;
 
 in vec2 texCoords;
 in vec3 normal;
 in vec4 worldPos;
-
-uniform mat4 lightProj;
-uniform mat4 lightView;
-uniform vec3 color;
 
 struct PointLight {
 	vec3 color;
@@ -25,6 +20,9 @@ struct DirectionalLight {
 	vec3 dir;
 	vec3 pointColor;
 	float multiplier;
+	mat4 proj;
+	mat4 view;
+	sampler2D samplerUnit;
 };
 
 struct SpotLight {
@@ -34,15 +32,18 @@ struct SpotLight {
 	float umbra;
 	float prenumbra;
 	float multiplier;
+	mat4 proj;
+	mat4 view;
+	sampler2D samplerUnit;
 };
 
-uniform PointLight pointLights[5];
+uniform PointLight pointLights[1];
 uniform int numPointLights;
 
-uniform DirectionalLight directionalLights[5];
+uniform DirectionalLight directionalLights[1];
 uniform int numDirectionalLights;
 
-uniform SpotLight spotLights[5];
+uniform SpotLight spotLights[1];
 uniform int numSpotLights;
 
 float windowFunc(float r, float maxDist) {
@@ -95,38 +96,39 @@ float ndcToTex(float ndc) {
 	return (ndc * 0.5) + 0.5;
 }
 
-void main() {
-
-	vec4 surfaceColor = texture(tex, texCoords);
-	FragColor = surfaceColor * 0.1;
-
+vec4 shadowVec(sampler2D texUnit, mat4 lightProj, mat4 lightView) {
 	vec4 lightRelPos = lightProj * lightView * worldPos;
 	lightRelPos /= lightRelPos.w;
 	vec2 lightDepthUv = vec2(ndcToTex(lightRelPos.x), ndcToTex(lightRelPos.y));
 
 	if (lightDepthUv.x < 0 || lightDepthUv.x > 1 || lightDepthUv.y < 0 || lightDepthUv.y > 1) {
-		// FragColor = vec4(0,0,0,1);
-		return;
+		return vec4(0,0,0,1);	
 	}
 
 	float depthVal = ndcToTex(lightRelPos.z);
 
-	float closestZVal = texture(lightDepthTexUnit, lightDepthUv).x;
+	float closestZVal = texture(texUnit, lightDepthUv).x;
 
 	if (depthVal - 0.0025 > closestZVal) {
-		// FragColor = vec4(0,0,0,1);
-		return;	
+		return vec4(0,0,0,1);	
 	}
+	return vec4(1,1,1,1);
+}
+
+void main() {
+
+	vec4 surfaceColor = texture(tex, texCoords);
+	FragColor = surfaceColor * 0.1;
 
 	for (int i = 0; i < numPointLights; i++) {
 		FragColor += calcPointLight(i, surfaceColor);
 	}
 
 	for (int i = 0; i < numDirectionalLights; i++) {
-		 FragColor += calcDirLight(i, surfaceColor);
+		 FragColor += (shadowVec(directionalLights[i].samplerUnit, directionalLights[i].proj, directionalLights[i].view) * calcDirLight(i, surfaceColor));
 	}
 
 	for (int i = 0; i < numSpotLights; i++) {
-		FragColor += calcSpotLight(i, surfaceColor);
+		FragColor += (shadowVec(spotLights[i].samplerUnit, spotLights[i].proj, spotLights[i].view) * calcSpotLight(i, surfaceColor));
 	}
 }

@@ -31,10 +31,31 @@ static float quadVertices[] = {
 	 1.0f,  1.0f,  1.0f, 1.0f
 };
 
-#define SPOT_LIGHT_DEBUG 0
-
 int width = 800;
 int height = 600;
+
+void lightPassFb(LightFrameBuffer& fb, glm::mat4& lightView, glm::mat4& lightProj, ShaderProgram& lightPassShaderProgram,
+	Model& vikingModel, glm::mat4& vikingModelMat, Model& cubeModel, glm::mat4& cubeModelMat
+) {
+
+	fb.bind();
+	FrameBuffer::ClearBuffers(glm::vec3(0, 0, 0));
+
+	lightPassShaderProgram.setMat4("view", lightView);
+	lightPassShaderProgram.setMat4("projection", lightProj);
+
+	lightPassShaderProgram.setMat4("model", vikingModelMat);
+	lightPassShaderProgram.bind();
+	vikingModel.render();
+	lightPassShaderProgram.unbind();
+
+	lightPassShaderProgram.setMat4("model", cubeModelMat);
+	lightPassShaderProgram.bind();
+	cubeModel.render();
+	lightPassShaderProgram.unbind();
+
+	fb.unbind();
+}
 
 int main(int argc, char* args[]) {
 
@@ -128,27 +149,22 @@ int main(int argc, char* args[]) {
 	glm::vec3 pointLightPos(0, 3, 0);
 	PointLight pointLight(pointLightColor, pointLightPos, 20.0f, 3.0f);
 
-	glm::vec3 dirLightColor(0, 0, 1);
+	glm::vec3 dirLightColor(1, 1, 1);
 	glm::vec3 dir(0, -1, 0);
-	DirectionalLight directionalLight(dirLightColor, dir, 8.0f);
+	DirectionalLight directionalLight(dirLightColor, dir, 1.0f);
 
 	glm::vec3 spotLightColor(0, 1, 0);
 	glm::vec3 spotLightPos(0, 4, 0.2f);
 	glm::vec3 spotLightDir(0, -1, 0);
 	SpotLight spotLight(spotLightColor, spotLightPos, spotLightDir, 2.0f, glm::radians(60.0f), glm::radians(45.0f));
 
-	LightFrameBuffer lightPassFrameBuffer;
-	FrameBuffer spotLightDebugFB;
-	FrameBuffer orthoFB;
+	LightFrameBuffer spotLightPassFb;
+	LightFrameBuffer dirLightPassFb;
 
 	const std::string lightPassVertPath = "C:\\Sarthak\\programming\\RealTimeRendering\\src\\shaders\\lightPass.vert";
 	const std::string lightPassFragPath = "C:\\Sarthak\\programming\\RealTimeRendering\\src\\shaders\\lightPass.frag";
 	ShaderProgram lightPassShaderProgram(lightPassVertPath.c_str(), lightPassFragPath.c_str());
 
-	const std::string lightDepthRenderVert = "C:\\Sarthak\\programming\\RealTimeRendering\\src\\shaders\\lightDepthRender.vert";
-	const std::string lightDepthRenderFrag = "C:\\Sarthak\\programming\\RealTimeRendering\\src\\shaders\\lightDepthRender.frag";
-	ShaderProgram lightPassRenderProg(lightDepthRenderVert.c_str(), lightDepthRenderFrag.c_str());
-	lightPassRenderProg.setInt("depthTexUnit", 0);
 	Model lightPassRenderModel;
 	for (int i = 0; i < sizeof(quadVertices) / sizeof(float) / 4; i++) {
 		Vertex vertex{};
@@ -166,10 +182,8 @@ int main(int argc, char* args[]) {
 	lVao.attachVBO(lVbo, 1, 2, sizeof(Vertex), offsetof(Vertex, texCoord));
 	lVao.unbind();
 
-#if SPOT_LIGHT_DEBUG == 0
 	float xEntext = 10.0f;
 	float dirYPos = 10.0f;
-#endif
 
 	while (running) {
 		uint32_t cur = SDL_GetTicks();
@@ -205,93 +219,31 @@ int main(int argc, char* args[]) {
 		glm::mat4 vikingModel(1.0f);
 		vikingTransform.getModelMatrix(vikingModel);
 
-		// spot light pass
-#if SPOT_LIGHT_DEBUG == 0
-		glm::mat4 lightView = lightPassFrameBuffer.getLightViewMat(glm::vec3(0, 0, 0) - (dirYPos * directionalLight.dir), directionalLight.dir);
-		glm::mat4 lightProj = lightPassFrameBuffer.getDirLightProjMat(xEntext);
-		shaderProgram.setInt("numPointLights", 0);
-		shaderProgram.setInt("numDirectionalLights", 1);
-		shaderProgram.setInt("numSpotLights", 0);
-#else
-		glm::mat4 lightView = lightPassFrameBuffer.getLightViewMat(spotLight.pos, spotLight.dir);
-		glm::mat4 lightProj = lightPassFrameBuffer.getSpotLightProjMat(spotLight.umbra);
-		shaderProgram.setInt("numPointLights", 0);
-		shaderProgram.setInt("numDirectionalLights", 0);
-		shaderProgram.setInt("numSpotLights", 1);
-#endif
+		// light pass
+		glm::mat4 dirLightView = dirLightPassFb.getLightViewMat(glm::vec3(0, 0, 0) - (dirYPos * directionalLight.dir), directionalLight.dir);
+		glm::mat4 dirLightProj = dirLightPassFb.getDirLightProjMat(xEntext);
 
-		lightPassFrameBuffer.bind();
-		FrameBuffer::ClearBuffers(glm::vec3(0, 0, 0));
+		glm::mat4 spotLightView = spotLightPassFb.getLightViewMat(spotLight.pos, spotLight.dir);
+		glm::mat4 spotLightProj = spotLightPassFb.getSpotLightProjMat(spotLight.umbra);
 
-		lightPassShaderProgram.setMat4("view", lightView);
-		lightPassShaderProgram.setMat4("projection", lightProj);
-
-		lightPassShaderProgram.setMat4("model", vikingModel);
-		lightPassShaderProgram.bind();
-		vikingMeshRenderer.model.render();
-		lightPassShaderProgram.unbind();
-
-		lightPassShaderProgram.setMat4("model", cubeModel);
-		lightPassShaderProgram.bind();
-		cubeMeshRenderer.model.render();
-		lightPassShaderProgram.unbind();
-
-		lightPassFrameBuffer.unbind();
-
-
-		// spotlight debug pass
-		spotLightDebugFB.bind();
-		FrameBuffer::ClearBuffers(glm::vec3(0, 0, 0));
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, lightPassFrameBuffer.depthTexture);
-		lightPassRenderProg.bind();
-		lightPassRenderModel.render();
-		lightPassRenderProg.unbind();
-		spotLightDebugFB.unbind();
-
-		// ortho pass
-		orthoFB.bind();
-
-		glClearColor(0, 0, 0, 1);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		glViewport(0, 0, width, height);
-
-		shaderProgram.setMat4("projection", orthoProj);
-		pointLight.shaderProgram.setMat4("projection", orthoProj);
-		spotLight.shaderProgram.setMat4("projection", orthoProj);
-
-		shaderProgram.setMat4("view", camView);
-		pointLight.shaderProgram.setMat4("view", camView);
-		spotLight.shaderProgram.setMat4("view", camView);
-
-		/*
-		shaderProgram.setInt("numPointLights", 0);
-		shaderProgram.setInt("numDirectionalLights", 0);
-		shaderProgram.setInt("numSpotLights", 1);
-		*/
-
-		pointLight.setPointLightInShader(shaderProgram, 0);
-		directionalLight.setDirectionalLightInShader(shaderProgram, 0);
-		spotLight.setSpotLightInShader(shaderProgram, 0);
-
-		shaderProgram.setMat4("model", vikingModel);
-		vikingMeshRenderer.render();
-
-		shaderProgram.setMat4("model", cubeModel);
-		cubeMeshRenderer.render();
-
-		pointLight.debugRender();
-		spotLight.debugRender();
-
-		orthoFB.unbind();
+		lightPassFb(spotLightPassFb, spotLightView, spotLightProj, lightPassShaderProgram,
+			vikingMeshRenderer.model, vikingModel, cubeMeshRenderer.model, cubeModel);
+		lightPassFb(dirLightPassFb, dirLightView, dirLightProj, lightPassShaderProgram,
+			vikingMeshRenderer.model, vikingModel, cubeMeshRenderer.model, cubeModel);
 
 		// full color pass
 		glClearColor(0, 0, 0, 1);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glViewport(0, 0, width, height);
 
+		shaderProgram.setInt("numPointLights", 0);
+		shaderProgram.setInt("numDirectionalLights", 1);
+		shaderProgram.setInt("numSpotLights", 1);
+
 		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, lightPassFrameBuffer.depthTexture);
+		glBindTexture(GL_TEXTURE_2D, spotLightPassFb.depthTexture);
+		glActiveTexture(GL_TEXTURE2);
+		glBindTexture(GL_TEXTURE_2D, dirLightPassFb.depthTexture);
 
 		shaderProgram.setMat4("projection", perspProj);
 		pointLight.shaderProgram.setMat4("projection", perspProj);
@@ -301,19 +253,16 @@ int main(int argc, char* args[]) {
 		pointLight.shaderProgram.setMat4("view", camView);
 		spotLight.shaderProgram.setMat4("view", camView);
 
-		shaderProgram.setMat4("lightProj", lightProj);
-		shaderProgram.setMat4("lightView", lightView);
-		shaderProgram.setInt("lightDepthTexUnit", 1);
-
-		/*
-		shaderProgram.setInt("numPointLights", 0);
-		shaderProgram.setInt("numDirectionalLights", 1);
-		shaderProgram.setInt("numSpotLights", 0);
-		*/
-
 		pointLight.setPointLightInShader(shaderProgram, 0);
 		directionalLight.setDirectionalLightInShader(shaderProgram, 0);
+		shaderProgram.setInt("directionalLights[0].samplerUnit", 2);
+		shaderProgram.setMat4("directionalLights[0].proj", dirLightProj);
+		shaderProgram.setMat4("directionalLights[0].view", dirLightView);
+
 		spotLight.setSpotLightInShader(shaderProgram, 0);
+		shaderProgram.setInt("spotLights[0].samplerUnit", 1);
+		shaderProgram.setMat4("spotLights[0].proj", spotLightProj);
+		shaderProgram.setMat4("spotLights[0].view", spotLightView);
 
 		shaderProgram.setMat4("model", vikingModel);
 		vikingMeshRenderer.render();
@@ -353,10 +302,8 @@ int main(int argc, char* args[]) {
 		ImGui::Begin("dir Light");
 		ImGui::DragFloat3("dir", &directionalLight.dir.x, 0.1);
 		ImGui::DragFloat("multiplier", &directionalLight.multiplier, 0.05, 0);
-#if SPOT_LIGHT_DEBUG == 0
 		ImGui::DragFloat("xEntext", &xEntext, 0.05);
 		ImGui::DragFloat("dirYPos", &dirYPos, 0.05, 0);
-#endif
 		ImGui::ColorPicker3("color", &directionalLight.color.r);
 		ImGui::End();
 
@@ -367,14 +314,6 @@ int main(int argc, char* args[]) {
 		ImGui::DragFloat("umbra", &spotLight.umbra, 0.01, 0, glm::radians(90.0f));
 		ImGui::DragFloat("prenumbra", &spotLight.prenumbra, 0.01, 0, glm::radians(90.0f));
 		ImGui::ColorPicker3("color", &spotLight.color.r);
-		ImGui::End();
-
-		ImGui::Begin("spot light debug");
-		ImGui::Image((ImTextureID)spotLightDebugFB.colorTexture, ImVec2(width / 2.0f, height / 2.0f), ImVec2(0, 1), ImVec2(1, 0));
-		ImGui::End();
-
-		ImGui::Begin("ortho debug");
-		ImGui::Image((ImTextureID)orthoFB.colorTexture, ImVec2(width / 2.0f, height / 2.0f), ImVec2(0, 1), ImVec2(1, 0));
 		ImGui::End();
 
 		glViewport(0, 0, (int)io.DisplaySize.x, (int)io.DisplaySize.y);
