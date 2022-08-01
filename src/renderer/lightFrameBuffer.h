@@ -17,6 +17,6 @@ struct LightFrameBuffer {
 	unsigned int depthTexture;
 
 	glm::mat4 getLightViewMat(const glm::vec3& lightPos, const glm::vec3& lightDir);
-	glm::mat4 getDirLightProjMat();
+	glm::mat4 getDirLightProjMat(float xExtent);
 	glm::mat4 getSpotLightProjMat(float angle);
 };

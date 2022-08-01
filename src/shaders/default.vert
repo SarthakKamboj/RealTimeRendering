@@ -10,12 +10,11 @@ uniform mat4 projection;
 
 out vec2 texCoords;
 out vec3 normal;
-out vec3 worldPos;
+out vec4 worldPos;
 
 void main() {
-	vec4 worldPosVec4 = model * vec4(aPos, 1.0);
-	worldPos = worldPosVec4.xyz;
-	gl_Position = projection * view * worldPosVec4;
+	worldPos = model * vec4(aPos, 1.0);
+	gl_Position = projection * view * worldPos;
 	texCoords = aTexCoords;
 	normal = normalize(model * vec4(aNormal, 1.0)).xyz;
 }

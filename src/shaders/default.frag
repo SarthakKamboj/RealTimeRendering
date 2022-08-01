@@ -3,10 +3,15 @@
 out vec4 FragColor;
 
 uniform sampler2D tex;
+uniform sampler2D lightDepthTexUnit;
 
 in vec2 texCoords;
 in vec3 normal;
-in vec3 worldPos;
+in vec4 worldPos;
+
+uniform mat4 lightProj;
+uniform mat4 lightView;
+uniform vec3 color;
 
 struct PointLight {
 	vec3 color;
@@ -58,7 +63,7 @@ float dirFalloffFunc(vec3 lightToSurface, int i) {
 }
 
 vec4 calcPointLight(int i, vec4 surfaceColor) {
-	vec3 lightVec = pointLights[i].pos - worldPos;
+	vec3 lightVec = pointLights[i].pos - worldPos.xyz;
 	float lightDistSquared = dot(lightVec, lightVec);
 	float lightDist = sqrt(lightDistSquared);
 	lightVec = lightVec / lightDist;
@@ -75,7 +80,7 @@ vec4 calcDirLight(int i, vec4 surfaceColor) {
 }
 
 vec4 calcSpotLight(int i, vec4 surfaceColor) {
-	vec3 lightToSurface = worldPos - spotLights[i].pos;
+	vec3 lightToSurface = worldPos.xyz - spotLights[i].pos;
 	float lightDistSquared = dot(lightToSurface, lightToSurface);
 	lightToSurface = lightToSurface / sqrt(lightDistSquared);
 
@@ -86,10 +91,32 @@ vec4 calcSpotLight(int i, vec4 surfaceColor) {
 	return spotLights[i].multiplier * angleMultiplier * vec4(pointColor, 1.0) * surfaceColor * distanceFallOffFunc(lightDistSquared) * dirFalloffFunc(lightToSurface, i);
 }
 
-void main() {
-	vec4 surfaceColor = texture(tex, texCoords);
+float ndcToTex(float ndc) {
+	return (ndc * 0.5) + 0.5;
+}
 
+void main() {
+
+	vec4 surfaceColor = texture(tex, texCoords);
 	FragColor = surfaceColor * 0.1;
+
+	vec4 lightRelPos = lightProj * lightView * worldPos;
+	lightRelPos /= lightRelPos.w;
+	vec2 lightDepthUv = vec2(ndcToTex(lightRelPos.x), ndcToTex(lightRelPos.y));
+
+	if (lightDepthUv.x < 0 || lightDepthUv.x > 1 || lightDepthUv.y < 0 || lightDepthUv.y > 1) {
+		// FragColor = vec4(0,0,0,1);
+		return;
+	}
+
+	float depthVal = ndcToTex(lightRelPos.z);
+
+	float closestZVal = texture(lightDepthTexUnit, lightDepthUv).x;
+
+	if (depthVal - 0.0025 > closestZVal) {
+		// FragColor = vec4(0,0,0,1);
+		return;	
+	}
 
 	for (int i = 0; i < numPointLights; i++) {
 		FragColor += calcPointLight(i, surfaceColor);
