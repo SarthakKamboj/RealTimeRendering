@@ -35,24 +35,20 @@ int width = 800;
 int height = 600;
 
 void lightPassFb(LightFrameBuffer& fb, glm::mat4& lightView, glm::mat4& lightProj, ShaderProgram& lightPassShaderProgram,
-	Model& vikingModel, glm::mat4& vikingModelMat, Model& cubeModel, glm::mat4& cubeModelMat
+	const std::vector<Model*>& models, const std::vector<glm::mat4>& modelMats
 ) {
-
 	fb.bind();
 	FrameBuffer::ClearBuffers(glm::vec3(0, 0, 0));
 
 	lightPassShaderProgram.setMat4("view", lightView);
 	lightPassShaderProgram.setMat4("projection", lightProj);
 
-	lightPassShaderProgram.setMat4("model", vikingModelMat);
-	lightPassShaderProgram.bind();
-	vikingModel.render();
-	lightPassShaderProgram.unbind();
-
-	lightPassShaderProgram.setMat4("model", cubeModelMat);
-	lightPassShaderProgram.bind();
-	cubeModel.render();
-	lightPassShaderProgram.unbind();
+	for (int i = 0; i < models.size(); i++) {
+		lightPassShaderProgram.setMat4("model", modelMats[i]);
+		lightPassShaderProgram.bind();
+		models[i]->render();
+		lightPassShaderProgram.unbind();
+	}
 
 	fb.unbind();
 }
@@ -185,6 +181,8 @@ int main(int argc, char* args[]) {
 	float xEntext = 10.0f;
 	float dirYPos = 10.0f;
 
+	std::vector<Model*> models = { &cubeMeshRenderer.model, &vikingMeshRenderer.model };
+
 	while (running) {
 		uint32_t cur = SDL_GetTicks();
 		float timeElapsed = ((cur - prev) / 1000.0f);
@@ -219,6 +217,8 @@ int main(int argc, char* args[]) {
 		glm::mat4 vikingModel(1.0f);
 		vikingTransform.getModelMatrix(vikingModel);
 
+		std::vector<glm::mat4> modelMats = { cubeModel, vikingModel };
+
 		// light pass
 		glm::mat4 dirLightView = dirLightPassFb.getLightViewMat(glm::vec3(0, 0, 0) - (dirYPos * directionalLight.dir), directionalLight.dir);
 		glm::mat4 dirLightProj = dirLightPassFb.getDirLightProjMat(xEntext);
@@ -227,16 +227,16 @@ int main(int argc, char* args[]) {
 		glm::mat4 spotLightProj = spotLightPassFb.getSpotLightProjMat(spotLight.umbra);
 
 		lightPassFb(spotLightPassFb, spotLightView, spotLightProj, lightPassShaderProgram,
-			vikingMeshRenderer.model, vikingModel, cubeMeshRenderer.model, cubeModel);
+			models, modelMats);
 		lightPassFb(dirLightPassFb, dirLightView, dirLightProj, lightPassShaderProgram,
-			vikingMeshRenderer.model, vikingModel, cubeMeshRenderer.model, cubeModel);
+			models, modelMats);
 
 		// full color pass
 		glClearColor(0, 0, 0, 1);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glViewport(0, 0, width, height);
 
-		shaderProgram.setInt("numPointLights", 0);
+		shaderProgram.setInt("numPointLights", 1);
 		shaderProgram.setInt("numDirectionalLights", 1);
 		shaderProgram.setInt("numSpotLights", 1);
 
