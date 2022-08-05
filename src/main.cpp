@@ -35,7 +35,7 @@ int width = 800;
 int height = 600;
 
 void lightPassFb(LightFrameBuffer& fb, glm::mat4& lightView, glm::mat4& lightProj, ShaderProgram& lightPassShaderProgram,
-	const std::vector<MeshRenderer*>& meshRenderers, const std::vector<glm::mat4>& modelMats
+	Model& selectionModel, const std::vector<glm::mat4>& modelMats
 ) {
 	fb.bind();
 	FrameBuffer::ClearBuffers(glm::vec3(0, 0, 0));
@@ -43,11 +43,10 @@ void lightPassFb(LightFrameBuffer& fb, glm::mat4& lightView, glm::mat4& lightPro
 	lightPassShaderProgram.setMat4("view", lightView);
 	lightPassShaderProgram.setMat4("projection", lightProj);
 
-	// for (int i = 0; i < meshRenderers.size(); i++) {
 	for (int i = 0; i < modelMats.size(); i++) {
 		lightPassShaderProgram.setMat4("model", modelMats[i]);
 		lightPassShaderProgram.bind();
-		meshRenderers[0]->model.render();
+		selectionModel.render();
 		lightPassShaderProgram.unbind();
 	}
 
@@ -119,10 +118,6 @@ int main(int argc, char* args[]) {
 	float ratio = (float)height / (float)width;
 	glm::mat4 orthoProj = glm::ortho(-xExtent, xExtent, -xExtent * ratio, xExtent * ratio, 0.1f, 100.0f);
 
-	std::string vikingModelPath = "C:\\Sarthak\\programming\\VulkanGraphicsEngine\\assets\\viking_room.obj";
-	std::string vikingTexPath = "C:\\Sarthak\\programming\\VulkanGraphicsEngine\\assets\\viking_room.png";
-	MeshRenderer vikingMeshRenderer(vikingModelPath, vikingTexPath, shaderProgram);
-
 	std::string selectionModelPath = "C:\\Sarthak\\programming\\RealTimeRendering\\src\\assets\\selection.obj";
 	std::string selectionTexPath = "C:\\Sarthak\\programming\\RealTimeRendering\\src\\assets\\selection.png";
 	MeshRenderer selectionMeshRenderer(selectionModelPath, selectionTexPath, shaderProgram);
@@ -130,21 +125,6 @@ int main(int argc, char* args[]) {
 	Transform selectionTransform;
 	selectionTransform.scale = 0.25f;
 	selectionTransform.pos = glm::vec3(0.0f, 0.0f, 0.0f);
-	// selectionTransform.rot.x = -90.0f;
-
-	Transform vikingTransform;
-	vikingTransform.scale = 2.0f;
-	vikingTransform.pos = glm::vec3(0.0f, 0.0f, 0.0f);
-	vikingTransform.rot.x = -90.0f;
-
-	std::string cubeModelPath = "C:\\Sarthak\\programming\\RealTimeRendering\\src\\assets\\cube.obj";
-	std::string cubeTexPath = "C:\\Sarthak\\programming\\RealTimeRendering\\src\\assets\\cube.png";
-	MeshRenderer cubeMeshRenderer(cubeModelPath, cubeTexPath, shaderProgram);
-
-	Transform cubeTransform;
-	cubeTransform.scale = 0.3f;
-	cubeTransform.pos = glm::vec3(0.0f, 1.0f, 0.0f);
-	cubeTransform.rot.x = -90.0f;
 
 	Input input;
 	bool running = true;
@@ -191,7 +171,6 @@ int main(int argc, char* args[]) {
 	float xEntext = 10.0f;
 	float dirYPos = 10.0f;
 
-	// std::vector<MeshRenderer*> meshRenderers = { &cubeMeshRenderer, &vikingMeshRenderer, &selectionMeshRenderer };
 	std::vector<MeshRenderer*> meshRenderers = { &selectionMeshRenderer };
 
 	int pcfLayers = 2;
@@ -228,18 +207,12 @@ int main(int argc, char* args[]) {
 		glm::vec3 camPos(radius * cos(glm::radians(angle)), yPos, radius * sin(glm::radians(angle)));
 		glm::mat4 camView = glm::lookAt(camPos, lookAt, glm::vec3(0, 1, 0));
 
-		glm::mat4 cubeModel(1.0f);
-		cubeTransform.getModelMatrix(cubeModel);
-
-		glm::mat4 vikingModel(1.0f);
-		vikingTransform.getModelMatrix(vikingModel);
-
 		glm::mat4 selectionModel(1.0f);
 		selectionTransform.getModelMatrix(selectionModel);
 		Transform curSelTransform = selectionTransform;
-		// std::vector<glm::mat4> modelMats = { cubeModel, vikingModel };
-		// std::vector<glm::mat4> modelMats = { selectionModel };
+
 		std::vector<glm::mat4> modelMats;
+
 		for (int row = 0; row < 3; row++) {
 			for (int col = 0; col < 3; col++) {
 				curSelTransform.pos = selectionTransform.pos + glm::vec3(row, 0, col);
@@ -260,9 +233,9 @@ int main(int argc, char* args[]) {
 		glm::mat4 spotLightProj = spotLightPassFb.getSpotLightProjMat(spotLight.umbra);
 
 		lightPassFb(spotLightPassFb, spotLightView, spotLightProj, lightPassShaderProgram,
-			meshRenderers, modelMats);
+			selectionMeshRenderer.model, modelMats);
 		lightPassFb(dirLightPassFb, dirLightView, dirLightProj, lightPassShaderProgram,
-			meshRenderers, modelMats);
+			selectionMeshRenderer.model, modelMats);
 
 		// full color pass
 		glClearColor(0, 0, 0, 1);
@@ -299,34 +272,19 @@ int main(int argc, char* args[]) {
 
 		shaderProgram.setInt("pcfLayers", pcfLayers);
 
-		// for (int i = 0; i < meshRenderers.size(); i++) {
 		for (int i = 0; i < modelMats.size(); i++) {
 			shaderProgram.setMat4("model", modelMats[i]);
-			meshRenderers[0]->render();
+			selectionMeshRenderer.render();
 		}
 
 		pointLight.debugRender();
 		spotLight.debugRender();
 
-		ImGui::Begin("Viking Transform");
-		ImGui::DragInt("pcf", &pcfLayers, 1, 0, 10);
-		ImGui::DragFloat3("transform", &vikingTransform.pos.x, 0.1f);
-		ImGui::DragFloat("scale", &vikingTransform.scale, 0.1f);
-		ImGui::DragFloat3("rotation", &vikingTransform.rot.x, 1, -180.0f, 180.0f);
-		ImGui::End();
-
 		ImGui::Begin("Selection Transform");
+		ImGui::DragInt("pcf", &pcfLayers, 1, 0, 10);
 		ImGui::DragFloat3("transform", &selectionTransform.pos.x, 0.1f);
 		ImGui::DragFloat("scale", &selectionTransform.scale, 0.1f);
 		ImGui::DragFloat3("rotation", &selectionTransform.rot.x, 1, -180.0f, 180.0f);
-		ImGui::End();
-
-
-
-		ImGui::Begin("cube Transform");
-		ImGui::DragFloat3("transform", &cubeTransform.pos.x, 0.1f);
-		ImGui::DragFloat("scale", &cubeTransform.scale, 0.1f);
-		ImGui::DragFloat3("rotation", &cubeTransform.rot.x, 1, -180.0f, 180.0f);
 		ImGui::End();
 
 		ImGui::Begin("Camera");
