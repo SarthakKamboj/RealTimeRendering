@@ -35,7 +35,7 @@ int width = 800;
 int height = 600;
 
 void lightPassFb(LightFrameBuffer& fb, glm::mat4& lightView, glm::mat4& lightProj, ShaderProgram& lightPassShaderProgram,
-	const std::vector<Model*>& models, const std::vector<glm::mat4>& modelMats
+	const std::vector<MeshRenderer*>& meshRenderers, const std::vector<glm::mat4>& modelMats
 ) {
 	fb.bind();
 	FrameBuffer::ClearBuffers(glm::vec3(0, 0, 0));
@@ -43,10 +43,11 @@ void lightPassFb(LightFrameBuffer& fb, glm::mat4& lightView, glm::mat4& lightPro
 	lightPassShaderProgram.setMat4("view", lightView);
 	lightPassShaderProgram.setMat4("projection", lightProj);
 
-	for (int i = 0; i < models.size(); i++) {
+	// for (int i = 0; i < meshRenderers.size(); i++) {
+	for (int i = 0; i < modelMats.size(); i++) {
 		lightPassShaderProgram.setMat4("model", modelMats[i]);
 		lightPassShaderProgram.bind();
-		models[i]->render();
+		meshRenderers[0]->model.render();
 		lightPassShaderProgram.unbind();
 	}
 
@@ -109,7 +110,7 @@ int main(int argc, char* args[]) {
 
 	shaderProgram.setInt("tex", 0);
 
-	float radius = 10.0f;
+	float radius = 12.0f;
 	float yPos = 5.0f;
 	float angle = 0.0f;
 	glm::vec3 lookAt(0.0f, 0.0f, 0.0f);
@@ -121,6 +122,15 @@ int main(int argc, char* args[]) {
 	std::string vikingModelPath = "C:\\Sarthak\\programming\\VulkanGraphicsEngine\\assets\\viking_room.obj";
 	std::string vikingTexPath = "C:\\Sarthak\\programming\\VulkanGraphicsEngine\\assets\\viking_room.png";
 	MeshRenderer vikingMeshRenderer(vikingModelPath, vikingTexPath, shaderProgram);
+
+	std::string selectionModelPath = "C:\\Sarthak\\programming\\RealTimeRendering\\src\\assets\\selection.obj";
+	std::string selectionTexPath = "C:\\Sarthak\\programming\\RealTimeRendering\\src\\assets\\selection.png";
+	MeshRenderer selectionMeshRenderer(selectionModelPath, selectionTexPath, shaderProgram);
+
+	Transform selectionTransform;
+	selectionTransform.scale = 0.25f;
+	selectionTransform.pos = glm::vec3(0.0f, 0.0f, 0.0f);
+	// selectionTransform.rot.x = -90.0f;
 
 	Transform vikingTransform;
 	vikingTransform.scale = 2.0f;
@@ -149,10 +159,10 @@ int main(int argc, char* args[]) {
 	glm::vec3 dir(0, -1, 0);
 	DirectionalLight directionalLight(dirLightColor, dir, 1.0f);
 
-	glm::vec3 spotLightColor(0, 1, 0);
+	glm::vec3 spotLightColor(1, 1, 1);
 	glm::vec3 spotLightPos(0, 4, 0.2f);
 	glm::vec3 spotLightDir(0, -1, 0);
-	SpotLight spotLight(spotLightColor, spotLightPos, spotLightDir, 2.0f, glm::radians(60.0f), glm::radians(45.0f));
+	SpotLight spotLight(spotLightColor, spotLightPos, spotLightDir, 20.0f, glm::radians(60.0f), glm::radians(45.0f));
 
 	LightFrameBuffer spotLightPassFb;
 	LightFrameBuffer dirLightPassFb;
@@ -181,7 +191,11 @@ int main(int argc, char* args[]) {
 	float xEntext = 10.0f;
 	float dirYPos = 10.0f;
 
-	std::vector<Model*> models = { &cubeMeshRenderer.model, &vikingMeshRenderer.model };
+	// std::vector<MeshRenderer*> meshRenderers = { &cubeMeshRenderer, &vikingMeshRenderer, &selectionMeshRenderer };
+	std::vector<MeshRenderer*> meshRenderers = { &selectionMeshRenderer };
+
+	int pcfLayers = 2;
+	int selected = 0;
 
 	while (running) {
 		uint32_t cur = SDL_GetTicks();
@@ -201,6 +215,9 @@ int main(int argc, char* args[]) {
 			if (event.type == SDL_KEYDOWN) {
 				SDL_Keycode keyDown = event.key.keysym.sym;
 				input.enterPressed = (keyDown == SDLK_RETURN);
+				if (keyDown == SDLK_RIGHT) {
+					selected = (selected + 1) % 9;
+				}
 			}
 		}
 
@@ -217,7 +234,23 @@ int main(int argc, char* args[]) {
 		glm::mat4 vikingModel(1.0f);
 		vikingTransform.getModelMatrix(vikingModel);
 
-		std::vector<glm::mat4> modelMats = { cubeModel, vikingModel };
+		glm::mat4 selectionModel(1.0f);
+		selectionTransform.getModelMatrix(selectionModel);
+		Transform curSelTransform = selectionTransform;
+		// std::vector<glm::mat4> modelMats = { cubeModel, vikingModel };
+		// std::vector<glm::mat4> modelMats = { selectionModel };
+		std::vector<glm::mat4> modelMats;
+		for (int row = 0; row < 3; row++) {
+			for (int col = 0; col < 3; col++) {
+				curSelTransform.pos = selectionTransform.pos + glm::vec3(row, 0, col);
+				if (row * 3 + col == selected) {
+					curSelTransform.pos.y = 1.0f;
+				}
+				glm::mat4 model(1.0f);
+				curSelTransform.getModelMatrix(model);
+				modelMats.push_back(model);
+			}
+		}
 
 		// light pass
 		glm::mat4 dirLightView = dirLightPassFb.getLightViewMat(glm::vec3(0, 0, 0) - (dirYPos * directionalLight.dir), directionalLight.dir);
@@ -227,17 +260,17 @@ int main(int argc, char* args[]) {
 		glm::mat4 spotLightProj = spotLightPassFb.getSpotLightProjMat(spotLight.umbra);
 
 		lightPassFb(spotLightPassFb, spotLightView, spotLightProj, lightPassShaderProgram,
-			models, modelMats);
+			meshRenderers, modelMats);
 		lightPassFb(dirLightPassFb, dirLightView, dirLightProj, lightPassShaderProgram,
-			models, modelMats);
+			meshRenderers, modelMats);
 
 		// full color pass
 		glClearColor(0, 0, 0, 1);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glViewport(0, 0, width, height);
 
-		shaderProgram.setInt("numPointLights", 1);
-		shaderProgram.setInt("numDirectionalLights", 1);
+		shaderProgram.setInt("numPointLights", 0);
+		shaderProgram.setInt("numDirectionalLights", 0);
 		shaderProgram.setInt("numSpotLights", 1);
 
 		glActiveTexture(GL_TEXTURE1);
@@ -264,20 +297,31 @@ int main(int argc, char* args[]) {
 		shaderProgram.setMat4("spotLights[0].proj", spotLightProj);
 		shaderProgram.setMat4("spotLights[0].view", spotLightView);
 
-		shaderProgram.setMat4("model", vikingModel);
-		vikingMeshRenderer.render();
+		shaderProgram.setInt("pcfLayers", pcfLayers);
 
-		shaderProgram.setMat4("model", cubeModel);
-		cubeMeshRenderer.render();
+		// for (int i = 0; i < meshRenderers.size(); i++) {
+		for (int i = 0; i < modelMats.size(); i++) {
+			shaderProgram.setMat4("model", modelMats[i]);
+			meshRenderers[0]->render();
+		}
 
 		pointLight.debugRender();
 		spotLight.debugRender();
 
 		ImGui::Begin("Viking Transform");
+		ImGui::DragInt("pcf", &pcfLayers, 1, 0, 10);
 		ImGui::DragFloat3("transform", &vikingTransform.pos.x, 0.1f);
 		ImGui::DragFloat("scale", &vikingTransform.scale, 0.1f);
 		ImGui::DragFloat3("rotation", &vikingTransform.rot.x, 1, -180.0f, 180.0f);
 		ImGui::End();
+
+		ImGui::Begin("Selection Transform");
+		ImGui::DragFloat3("transform", &selectionTransform.pos.x, 0.1f);
+		ImGui::DragFloat("scale", &selectionTransform.scale, 0.1f);
+		ImGui::DragFloat3("rotation", &selectionTransform.rot.x, 1, -180.0f, 180.0f);
+		ImGui::End();
+
+
 
 		ImGui::Begin("cube Transform");
 		ImGui::DragFloat3("transform", &cubeTransform.pos.x, 0.1f);
