@@ -3,6 +3,9 @@
 out vec4 FragColor;
 
 uniform sampler2D tex;
+// uniform sampler2D xTex;
+// uniform sampler2D oTex;
+uniform sampler2D imgTex;
 uniform int pcfLayers;
 
 in vec2 texCoords;
@@ -146,7 +149,8 @@ vec4 shadowVec(sampler2D texUnit, mat4 lightProj, mat4 lightView) {
 void main() {
 
 	vec4 surfaceColor = texture(tex, texCoords);
-	FragColor = surfaceColor * 0.1;
+	vec4 selected = texture(imgTex, texCoords);
+	FragColor = ((surfaceColor * selected) + vec4(1,0,0,1)) * 0.1;
 
 	for (int i = 0; i < numPointLights; i++) {
 		FragColor += calcPointLight(i, surfaceColor);

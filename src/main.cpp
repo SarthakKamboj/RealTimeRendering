@@ -120,6 +120,10 @@ int main(int argc, char* args[]) {
 
 	std::string selectionModelPath = "C:\\Sarthak\\programming\\RealTimeRendering\\src\\assets\\selection.obj";
 	std::string selectionTexPath = "C:\\Sarthak\\programming\\RealTimeRendering\\src\\assets\\selection.png";
+	std::string xPath = "C:\\Sarthak\\programming\\RealTimeRendering\\src\\assets\\x.png";
+	std::string oPath = "C:\\Sarthak\\programming\\RealTimeRendering\\src\\assets\\o.png";
+	Texture xTex(xPath.c_str(), 3);
+	Texture oTex(oPath.c_str(), 4);
 	MeshRenderer selectionMeshRenderer(selectionModelPath, selectionTexPath, shaderProgram);
 
 	Transform selectionTransform;
@@ -172,6 +176,12 @@ int main(int argc, char* args[]) {
 	float dirYPos = 10.0f;
 
 	std::vector<MeshRenderer*> meshRenderers = { &selectionMeshRenderer };
+	std::vector<int> xOrO;
+
+	xOrO.resize(9);
+	for (int i = 0; i < 9; i++) {
+		xOrO[i] = 3;
+	}
 
 	int pcfLayers = 2;
 	int selected = 0;
@@ -195,7 +205,19 @@ int main(int argc, char* args[]) {
 				SDL_Keycode keyDown = event.key.keysym.sym;
 				input.enterPressed = (keyDown == SDLK_RETURN);
 				if (keyDown == SDLK_RIGHT) {
+					selected = (selected - 1) % 9;
+				}
+				else if (keyDown == SDLK_LEFT) {
 					selected = (selected + 1) % 9;
+				}
+				else if (keyDown == SDLK_UP) {
+					selected = (selected - 3) % 9;
+				}
+				else if (keyDown == SDLK_DOWN) {
+					selected = (selected + 3) % 9;
+				}
+				else if (keyDown == SDLK_SPACE) {
+					xOrO[selected] = ((xOrO[selected] - 2) % 2) + 3;
 				}
 			}
 		}
@@ -250,6 +272,8 @@ int main(int argc, char* args[]) {
 		glBindTexture(GL_TEXTURE_2D, spotLightPassFb.depthTexture);
 		glActiveTexture(GL_TEXTURE2);
 		glBindTexture(GL_TEXTURE_2D, dirLightPassFb.depthTexture);
+		xTex.bind();
+		oTex.bind();
 
 		shaderProgram.setMat4("projection", perspProj);
 		pointLight.shaderProgram.setMat4("projection", perspProj);
@@ -273,6 +297,7 @@ int main(int argc, char* args[]) {
 		shaderProgram.setInt("pcfLayers", pcfLayers);
 
 		for (int i = 0; i < modelMats.size(); i++) {
+			shaderProgram.setInt("imgTex", xOrO[i]);
 			shaderProgram.setMat4("model", modelMats[i]);
 			selectionMeshRenderer.render();
 		}
