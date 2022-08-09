@@ -7,7 +7,7 @@ float lerp(float from, float to, float time) {
 	return from + ((to - from) * time);
 }
 
-const float TicTacToeSquare::selectAnimTime = 0.5f;
+const float TicTacToeSquare::selectAnimTime = 0.2f;
 const float TicTacToeSquare::minY = 0.0f;
 const float TicTacToeSquare::maxY = 0.5f;
 
