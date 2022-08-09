@@ -40,6 +40,32 @@ static float quadVertices[] = {
 int width = 800;
 int height = 600;
 
+bool getWinnerRow(const char board[GRID_ROWS][GRID_COLS], int row) {
+	return board[row][0] == board[row][1] && board[row][0] == board[row][2];
+}
+
+bool getWinnerCol(const char board[GRID_ROWS][GRID_COLS], int col) {
+	return board[0][col] == board[1][col] && board[1][col] == board[2][col];
+}
+
+int getWinnner(const char board[GRID_ROWS][GRID_COLS]) {
+	if (board[0][0] == board[1][1] && board[1][1] == board[2][2]) {
+		return board[0][0];
+	}
+	if (board[0][2] == board[1][1] && board[1][1] == board[2][0]) {
+		return board[0][2];
+	}
+	for (int i = 0; i < 3; i++) {
+		if (getWinnerRow(board, i)) {
+			return board[i][0];
+		}
+		if (getWinnerCol(board, i)) {
+			return board[0][i];
+		}
+	}
+	return NEITHER;
+}
+
 void lightPassFb(LightFrameBuffer& fb, glm::mat4& lightView, glm::mat4& lightProj, ShaderProgram& lightPassShaderProgram,
 	std::vector<MeshRenderer*>& meshRenderers, const std::vector<glm::mat4>& modelMats
 ) {
@@ -116,7 +142,7 @@ int main(int argc, char* args[]) {
 	shaderProgram.setInt("tex", 0);
 
 	float radius = 12.0f;
-	float yPos = 5.0f;
+	float yPos = 10.0f;
 	float angle = 0.0f;
 	glm::vec3 lookAt(0.0f, 0.0f, 0.0f);
 	glm::mat4 perspProj = glm::perspective(glm::radians(45.0f), ((float)width) / height, 0.1f, 100.0f);
@@ -178,13 +204,6 @@ int main(int argc, char* args[]) {
 	float xEntext = 10.0f;
 	float dirYPos = 10.0f;
 
-	std::vector<int> xOrO;
-
-	xOrO.resize(NUM_TTT_SQUARES);
-	for (int i = 0; i < NUM_TTT_SQUARES; i++) {
-		xOrO[i] = 3;
-	}
-
 	int pcfLayers = 2;
 	int selected = 0;
 
@@ -201,6 +220,8 @@ int main(int argc, char* args[]) {
 		}
 	}
 
+	int turn = X;
+
 	while (running) {
 		uint32_t cur = SDL_GetTicks();
 		deltaTime = ((cur - prev) / 1000.0f);
@@ -209,6 +230,7 @@ int main(int argc, char* args[]) {
 		SDL_Event event;
 		bool selectionChanged = false;
 		bool spaceClicked = false;
+		bool enterClicked = false;
 		while (SDL_PollEvent(&event)) {
 			input.enterPressed = false;
 			ImGui_ImplSDL2_ProcessEvent(&event);
@@ -237,15 +259,24 @@ int main(int argc, char* args[]) {
 					selected = (selected + 3) % NUM_TTT_SQUARES;
 					selectionChanged = true;
 				}
+
+				if (keyDown == SDLK_RETURN) {
+					enterClicked = true;
+					selected = -1;
+				}
+
 				else if (keyDown == SDLK_SPACE) {
 					spaceClicked = true;
-					xOrO[selected] = ((xOrO[selected] - 2) % 2) + 3;
 				}
 				else if (keyDown == SDLK_ESCAPE) {
 					running = false;
 				}
 				if (selected < 0) selected += NUM_TTT_SQUARES;
 			}
+		}
+
+		if (selectionChanged) {
+			std::cout << selected << std::endl;
 		}
 
 		for (int i = 0; i < ticTacToeSquares.size(); i++) {
@@ -255,7 +286,21 @@ int main(int argc, char* args[]) {
 			if (selectionChanged && i == selected) {
 				ticTacToeSquares[i].select();
 			}
-			ticTacToeSquares[i].update(spaceClicked);
+			ticTacToeSquares[i].update(spaceClicked, input.enterPressed, turn);
+		}
+
+		char board[GRID_ROWS][GRID_COLS]{};
+		for (int row = 0; row < GRID_ROWS; row++) {
+			for (int col = 0; col < GRID_COLS; col++) {
+				const TicTacToeSquare& ttts = ticTacToeSquares[(row * 3) + col];
+				board[row][col] = ttts.officiallySelected ? ttts.curOption : NEITHER;
+			}
+		}
+
+		int winner = getWinnner(board);
+
+		if (enterClicked) {
+			turn = (turn == X) ? Y : X;
 		}
 
 		ImGui_ImplOpenGL3_NewFrame();

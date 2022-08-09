@@ -3,10 +3,9 @@
 out vec4 FragColor;
 
 uniform sampler2D tex;
-// uniform sampler2D xTex;
-// uniform sampler2D oTex;
 uniform sampler2D imgTex;
 uniform int pcfLayers;
+uniform int chosenMultiplier;
 
 in vec2 texCoords;
 in vec3 normal;
@@ -149,7 +148,7 @@ vec4 shadowVec(sampler2D texUnit, mat4 lightProj, mat4 lightView) {
 void main() {
 
 	vec4 surfaceColor = texture(tex, texCoords);
-	vec4 selected = texture(imgTex, texCoords);
+	vec4 selected = texture(imgTex, texCoords) * vec4(chosenMultiplier,chosenMultiplier,chosenMultiplier,chosenMultiplier);
 	FragColor = ((surfaceColor * selected) + vec4(1,0,0,1)) * 0.1;
 
 	for (int i = 0; i < numPointLights; i++) {

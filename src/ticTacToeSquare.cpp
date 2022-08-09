@@ -7,9 +7,9 @@ float lerp(float from, float to, float time) {
 	return from + ((to - from) * time);
 }
 
-const float TicTacToeSquare::selectAnimTime = 0.2f;
+const float TicTacToeSquare::selectAnimTime = 0.45f;
 const float TicTacToeSquare::minY = 0.0f;
-const float TicTacToeSquare::maxY = 0.5f;
+const float TicTacToeSquare::maxY = 0.25f;
 
 TicTacToeSquare::TicTacToeSquare() {}
 
@@ -22,7 +22,7 @@ TicTacToeSquare::TicTacToeSquare(float posX, float posZ, MeshRenderer* _squareMe
 	squareMeshRenderer = _squareMeshRenderer;
 }
 
-void TicTacToeSquare::update(bool spaceClicked) {
+void TicTacToeSquare::update(bool spaceClicked, bool enterClicked, int turn) {
 	if (selected) {
 		transform.pos.y = lerp(minY, maxY, relativeTime);
 		relativeTime += deltaTime / TicTacToeSquare::selectAnimTime;
@@ -32,13 +32,30 @@ void TicTacToeSquare::update(bool spaceClicked) {
 		relativeTime += deltaTime / TicTacToeSquare::selectAnimTime;
 	}
 
-	if (spaceClicked && selected) {
-		curOption = (((curOption - X_TEX_UNIT) + 1) % 2) + X_TEX_UNIT;
+	if (officiallySelected) return;
+
+	if (selected) {
+		curOptionTex = X_TEX_UNIT + turn;
+		curOption = X + turn;
+		if (enterClicked) {
+			officiallySelected = true;
+			deSelect();
+		}
+	}
+	else {
+		if (!officiallySelected) {
+			curOptionTex = NEITHER;
+			curOption = NEITHER;
+		}
 	}
 }
 
 void TicTacToeSquare::render(ShaderProgram& shaderProgram) {
-	shaderProgram.setInt("imgTex", curOption);
+	shaderProgram.setInt("imgTex", curOptionTex);
+	if (officiallySelected) {
+		int a = 5;
+	}
+	shaderProgram.setInt("chosenMultiplier", curOption != NEITHER);
 	glm::mat4 modelMatrix;
 	transform.getModelMatrix(modelMatrix);
 	shaderProgram.setMat4("model", modelMatrix);
