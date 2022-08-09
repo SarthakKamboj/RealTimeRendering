@@ -10,5 +10,6 @@ public:
 
 	int texUnit;
 	unsigned int texture;
+	bool createdTexture = false;
 	char filePath[200];
 };

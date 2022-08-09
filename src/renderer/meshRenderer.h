@@ -8,13 +8,11 @@
 #include "loadModel.h"
 #include <vector>
 
-class MeshRenderer {
-public:
+struct MeshRenderer {
 	Texture texture;
-	ShaderProgram shaderProgram;
 	Model model;
 
-	MeshRenderer(const std::string& modelPath, const std::string& texPath, const ShaderProgram& _shaderProgram);
+	MeshRenderer(const std::string& modelPath, const std::string& texPath);
 
 	void render();
 };

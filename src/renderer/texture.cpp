@@ -4,7 +4,6 @@
 
 Texture::Texture() {
 	texUnit = -1;
-	texture = -1;
 	sprintf_s(filePath, "");
 }
 
@@ -15,9 +14,10 @@ Texture::Texture(const char* _filePath, int _texUnit) {
 
 void Texture::updateTextureFilePath(const char* _filePath) {
 
-	if (texture != -1) {
+	if (createdTexture) {
 		glDeleteTextures(1, &texture);
 	}
+	createdTexture = true;
 
 	stbi_set_flip_vertically_on_load(true);
 

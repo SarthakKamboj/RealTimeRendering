@@ -178,6 +178,7 @@
     <ClCompile Include="src\renderer\texture.cpp" />
     <ClCompile Include="src\renderer\vao.cpp" />
     <ClCompile Include="src\renderer\vbo.cpp" />
+    <ClCompile Include="src\ticTacToeSquare.cpp" />
     <ClCompile Include="src\transform.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -218,6 +219,7 @@
     <ClInclude Include="src\renderer\texture.h" />
     <ClInclude Include="src\renderer\vao.h" />
     <ClInclude Include="src\renderer\vbo.h" />
+    <ClInclude Include="src\ticTacToeSquare.h" />
     <ClInclude Include="src\transform.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -19,6 +19,12 @@
 #include "transform.h"
 #include "renderer/lightFrameBuffer.h"
 #include "renderer/frameBuffer.h"
+#include "ticTacToeSquare.h"
+
+#define GRID_ROWS 3
+#define GRID_COLS 3
+#define NUM_TTT_SQUARES (GRID_ROWS * GRID_COLS)
+float deltaTime = 0.0f;
 
 static float quadVertices[] = {
 	// positions   // texCoords
@@ -35,7 +41,7 @@ int width = 800;
 int height = 600;
 
 void lightPassFb(LightFrameBuffer& fb, glm::mat4& lightView, glm::mat4& lightProj, ShaderProgram& lightPassShaderProgram,
-	Model& selectionModel, const std::vector<glm::mat4>& modelMats
+	std::vector<MeshRenderer*>& meshRenderers, const std::vector<glm::mat4>& modelMats
 ) {
 	fb.bind();
 	FrameBuffer::ClearBuffers(glm::vec3(0, 0, 0));
@@ -46,7 +52,7 @@ void lightPassFb(LightFrameBuffer& fb, glm::mat4& lightView, glm::mat4& lightPro
 	for (int i = 0; i < modelMats.size(); i++) {
 		lightPassShaderProgram.setMat4("model", modelMats[i]);
 		lightPassShaderProgram.bind();
-		selectionModel.render();
+		meshRenderers[i]->model.render();
 		lightPassShaderProgram.unbind();
 	}
 
@@ -118,17 +124,14 @@ int main(int argc, char* args[]) {
 	float ratio = (float)height / (float)width;
 	glm::mat4 orthoProj = glm::ortho(-xExtent, xExtent, -xExtent * ratio, xExtent * ratio, 0.1f, 100.0f);
 
-	std::string selectionModelPath = "C:\\Sarthak\\programming\\RealTimeRendering\\src\\assets\\selection.obj";
-	std::string selectionTexPath = "C:\\Sarthak\\programming\\RealTimeRendering\\src\\assets\\selection.png";
 	std::string xPath = "C:\\Sarthak\\programming\\RealTimeRendering\\src\\assets\\x.png";
 	std::string oPath = "C:\\Sarthak\\programming\\RealTimeRendering\\src\\assets\\o.png";
-	Texture xTex(xPath.c_str(), 3);
-	Texture oTex(oPath.c_str(), 4);
-	MeshRenderer selectionMeshRenderer(selectionModelPath, selectionTexPath, shaderProgram);
+	Texture xTex(xPath.c_str(), X_TEX_UNIT);
+	Texture oTex(oPath.c_str(), O_TEX_UNIT);
 
-	Transform selectionTransform;
-	selectionTransform.scale = 0.25f;
-	selectionTransform.pos = glm::vec3(0.0f, 0.0f, 0.0f);
+	std::string selectionModelPath = "C:\\Sarthak\\programming\\RealTimeRendering\\src\\assets\\selection.obj";
+	std::string selectionTexPath = "C:\\Sarthak\\programming\\RealTimeRendering\\src\\assets\\selection.png";
+	MeshRenderer squareMeshRenderer(selectionModelPath, selectionTexPath);
 
 	Input input;
 	bool running = true;
@@ -175,23 +178,37 @@ int main(int argc, char* args[]) {
 	float xEntext = 10.0f;
 	float dirYPos = 10.0f;
 
-	std::vector<MeshRenderer*> meshRenderers = { &selectionMeshRenderer };
 	std::vector<int> xOrO;
 
-	xOrO.resize(9);
-	for (int i = 0; i < 9; i++) {
+	xOrO.resize(NUM_TTT_SQUARES);
+	for (int i = 0; i < NUM_TTT_SQUARES; i++) {
 		xOrO[i] = 3;
 	}
 
 	int pcfLayers = 2;
 	int selected = 0;
 
+	std::vector<TicTacToeSquare> ticTacToeSquares;
+	ticTacToeSquares.resize(NUM_TTT_SQUARES);
+
+	std::vector<MeshRenderer*> meshRenderers;
+	meshRenderers.resize(NUM_TTT_SQUARES);
+
+	for (int row = 0; row < GRID_ROWS; row++) {
+		for (int col = 0; col < GRID_COLS; col++) {
+			ticTacToeSquares[row * 3 + col] = TicTacToeSquare(row, col, &squareMeshRenderer);
+			meshRenderers[row * 3 + col] = &squareMeshRenderer;
+		}
+	}
+
 	while (running) {
 		uint32_t cur = SDL_GetTicks();
-		float timeElapsed = ((cur - prev) / 1000.0f);
+		deltaTime = ((cur - prev) / 1000.0f);
 		prev = cur;
 
 		SDL_Event event;
+		bool selectionChanged = false;
+		bool spaceClicked = false;
 		while (SDL_PollEvent(&event)) {
 			input.enterPressed = false;
 			ImGui_ImplSDL2_ProcessEvent(&event);
@@ -205,21 +222,40 @@ int main(int argc, char* args[]) {
 				SDL_Keycode keyDown = event.key.keysym.sym;
 				input.enterPressed = (keyDown == SDLK_RETURN);
 				if (keyDown == SDLK_RIGHT) {
-					selected = (selected - 1) % 9;
+					selected = (selected - 1) % NUM_TTT_SQUARES;
+					selectionChanged = true;
 				}
 				else if (keyDown == SDLK_LEFT) {
-					selected = (selected + 1) % 9;
+					selected = (selected + 1) % NUM_TTT_SQUARES;
+					selectionChanged = true;
 				}
 				else if (keyDown == SDLK_UP) {
-					selected = (selected - 3) % 9;
+					selected = (selected - 3) % NUM_TTT_SQUARES;
+					selectionChanged = true;
 				}
 				else if (keyDown == SDLK_DOWN) {
-					selected = (selected + 3) % 9;
+					selected = (selected + 3) % NUM_TTT_SQUARES;
+					selectionChanged = true;
 				}
 				else if (keyDown == SDLK_SPACE) {
+					spaceClicked = true;
 					xOrO[selected] = ((xOrO[selected] - 2) % 2) + 3;
 				}
+				else if (keyDown == SDLK_ESCAPE) {
+					running = false;
+				}
+				if (selected < 0) selected += NUM_TTT_SQUARES;
 			}
+		}
+
+		for (int i = 0; i < ticTacToeSquares.size(); i++) {
+			if (selectionChanged && ticTacToeSquares[i].selected) {
+				ticTacToeSquares[i].deSelect();
+			}
+			if (selectionChanged && i == selected) {
+				ticTacToeSquares[i].select();
+			}
+			ticTacToeSquares[i].update(spaceClicked);
 		}
 
 		ImGui_ImplOpenGL3_NewFrame();
@@ -229,24 +265,6 @@ int main(int argc, char* args[]) {
 		glm::vec3 camPos(radius * cos(glm::radians(angle)), yPos, radius * sin(glm::radians(angle)));
 		glm::mat4 camView = glm::lookAt(camPos, lookAt, glm::vec3(0, 1, 0));
 
-		glm::mat4 selectionModel(1.0f);
-		selectionTransform.getModelMatrix(selectionModel);
-		Transform curSelTransform = selectionTransform;
-
-		std::vector<glm::mat4> modelMats;
-
-		for (int row = 0; row < 3; row++) {
-			for (int col = 0; col < 3; col++) {
-				curSelTransform.pos = selectionTransform.pos + glm::vec3(row, 0, col);
-				if (row * 3 + col == selected) {
-					curSelTransform.pos.y = 1.0f;
-				}
-				glm::mat4 model(1.0f);
-				curSelTransform.getModelMatrix(model);
-				modelMats.push_back(model);
-			}
-		}
-
 		// light pass
 		glm::mat4 dirLightView = dirLightPassFb.getLightViewMat(glm::vec3(0, 0, 0) - (dirYPos * directionalLight.dir), directionalLight.dir);
 		glm::mat4 dirLightProj = dirLightPassFb.getDirLightProjMat(xEntext);
@@ -254,10 +272,18 @@ int main(int argc, char* args[]) {
 		glm::mat4 spotLightView = spotLightPassFb.getLightViewMat(spotLight.pos, spotLight.dir);
 		glm::mat4 spotLightProj = spotLightPassFb.getSpotLightProjMat(spotLight.umbra);
 
+		std::vector<glm::mat4> modelMats;
+		modelMats.resize(NUM_TTT_SQUARES);
+
+		for (int i = 0; i < ticTacToeSquares.size(); i++) {
+			TicTacToeSquare& ticTacToeSquare = ticTacToeSquares[i];
+			ticTacToeSquare.transform.getModelMatrix(modelMats[i]);
+		}
+
 		lightPassFb(spotLightPassFb, spotLightView, spotLightProj, lightPassShaderProgram,
-			selectionMeshRenderer.model, modelMats);
+			meshRenderers, modelMats);
 		lightPassFb(dirLightPassFb, dirLightView, dirLightProj, lightPassShaderProgram,
-			selectionMeshRenderer.model, modelMats);
+			meshRenderers, modelMats);
 
 		// full color pass
 		glClearColor(0, 0, 0, 1);
@@ -296,10 +322,8 @@ int main(int argc, char* args[]) {
 
 		shaderProgram.setInt("pcfLayers", pcfLayers);
 
-		for (int i = 0; i < modelMats.size(); i++) {
-			shaderProgram.setInt("imgTex", xOrO[i]);
-			shaderProgram.setMat4("model", modelMats[i]);
-			selectionMeshRenderer.render();
+		for (int i = 0; i < ticTacToeSquares.size(); i++) {
+			ticTacToeSquares[i].render(shaderProgram);
 		}
 
 		pointLight.debugRender();
@@ -307,9 +331,9 @@ int main(int argc, char* args[]) {
 
 		ImGui::Begin("Selection Transform");
 		ImGui::DragInt("pcf", &pcfLayers, 1, 0, 10);
-		ImGui::DragFloat3("transform", &selectionTransform.pos.x, 0.1f);
-		ImGui::DragFloat("scale", &selectionTransform.scale, 0.1f);
-		ImGui::DragFloat3("rotation", &selectionTransform.rot.x, 1, -180.0f, 180.0f);
+		ImGui::DragFloat3("transform", &ticTacToeSquares[0].transform.pos.x, 0.1f);
+		ImGui::DragFloat("scale", &ticTacToeSquares[0].transform.scale, 0.1f);
+		ImGui::DragFloat3("rotation", &ticTacToeSquares[0].transform.rot.x, 1, -180.0f, 180.0f);
 		ImGui::End();
 
 		ImGui::Begin("Camera");

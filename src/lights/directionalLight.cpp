@@ -17,6 +17,7 @@ void DirectionalLight::setDirectionalLightInShader(ShaderProgram& shaderProgram,
 	std::string lightDirVar = "directionalLights[" + std::to_string(idx) + "].dir";
 	std::string lightColorVar = "directionalLights[" + std::to_string(idx) + "].pointColor";
 	std::string lightMultVar = "directionalLights[" + std::to_string(idx) + "].multiplier";
+
 	shaderProgram.setVec3(lightDirVar.c_str(), dir);
 	shaderProgram.setVec3(lightColorVar.c_str(), color);
 	shaderProgram.setFloat(lightMultVar.c_str(), multiplier);
