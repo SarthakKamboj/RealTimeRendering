@@ -7,7 +7,7 @@ const uint32_t GridManager::TimeBetweenClicks = 100;
 GridManager::GridManager() {
 	for (int row = 0; row < 3; row++) {
 		for (int col = 0; col < 3; col++) {
-			grids.push_back(TicTacGrid(glm::vec2(row * 3, col * 3)));
+			grids.push_back(TicTacGrid(glm::vec2((row - 1) * 3, (col - 1) * 3)));
 		}
 	}
 }
@@ -80,12 +80,6 @@ void GridManager::update(const Input& input, int turn) {
 	}
 
 	int winner = TicTacGrid::GetWinner(board);
-
-	/*
-	if (!gridSelectionMode) {
-		grids[activeGrid].update(input, turn, gridSe);
-	}
-	*/
 
 	if (gridSelectionMode) {
 		for (int i = 0; i < grids.size(); i++) {
