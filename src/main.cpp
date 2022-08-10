@@ -217,7 +217,6 @@ int main(int argc, char* args[]) {
 					input.downArrow = true;
 				}
 				else if (keyDown == SDLK_SLASH) {
-					std::cout << "holding down slash" << std::endl;
 					input.slash = true;
 				}
 				else if (keyDown == SDLK_ESCAPE) {

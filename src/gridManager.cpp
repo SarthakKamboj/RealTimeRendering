@@ -2,7 +2,7 @@
 
 extern uint32_t curTimeMs;
 
-const uint32_t GridManager::TimeBetweenClicks = 300;
+const uint32_t GridManager::TimeBetweenClicks = 100;
 
 GridManager::GridManager() {
 	for (int row = 0; row < 3; row++) {
@@ -42,12 +42,10 @@ void GridManager::update(const Input& input, int turn) {
 		}
 
 		if (input.enter && gridSelectionMode) {
-			std::cout << "selected grid " << activeGrid << std::endl;
 			gridSelectionMode = false;
 			changedSelectionMode = true;
 		}
 		else if (input.slash) {
-			std::cout << "back in grid manager mode and am on " << activeGrid << std::endl;
 			gridSelectionMode = true;
 			changedSelectionMode = true;
 		}

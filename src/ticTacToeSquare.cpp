@@ -51,11 +51,12 @@ void TicTacToeSquare::update(bool enterClicked, int turn) {
 	}
 }
 
-void TicTacToeSquare::render(ShaderProgram& shaderProgram) {
+void TicTacToeSquare::render(ShaderProgram& shaderProgram, glm::mat4& parentMat) {
 	shaderProgram.setInt("imgTex", curOptionTex);
 	shaderProgram.setInt("chosenMultiplier", curOption != NEITHER);
 	glm::mat4 modelMatrix;
 	transform.getModelMatrix(modelMatrix);
+	modelMatrix = parentMat * modelMatrix;
 	shaderProgram.setMat4("model", modelMatrix);
 	shaderProgram.bind();
 	squareMeshRenderer->render();

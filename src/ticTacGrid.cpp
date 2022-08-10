@@ -66,8 +66,11 @@ void TicTacGrid::update(const Input& input, int turn, bool pollInput) {
 			if (selectionChanged && i == selectedSquare) {
 				ticTacToeSquares[i].select();
 			}
+			ticTacToeSquares[i].update(input.enter, turn);
 		}
-		ticTacToeSquares[i].update(input.enter, turn);
+		else {
+			ticTacToeSquares[i].update(false, turn);
+		}
 	}
 
 	char board[GRID_ROWS][GRID_COLS]{};
@@ -84,26 +87,35 @@ void TicTacGrid::update(const Input& input, int turn, bool pollInput) {
 void TicTacGrid::select() {
 	selected = true;
 	ticTacToeSquares[selectedSquare].deSelect();
+	/*
 	for (int i = 0; i < ticTacToeSquares.size(); i++) {
 		ticTacToeSquares[i].transform.pos.y += ActiveYPosAdd;
 		ticTacToeSquares[i].minY += ActiveYPosAdd;
 		ticTacToeSquares[i].maxY += ActiveYPosAdd;
 	}
+	*/
 }
 
 void TicTacGrid::deSelect() {
 	selected = false;
+	ticTacToeSquares[selectedSquare].deSelect();
+	/*
 	for (int i = 0; i < ticTacToeSquares.size(); i++) {
 		ticTacToeSquares[i].transform.pos.y -= ActiveYPosAdd;
 		ticTacToeSquares[i].minY -= ActiveYPosAdd;
 		ticTacToeSquares[i].maxY -= ActiveYPosAdd;
 	}
+	*/
 }
 
 void TicTacGrid::render(ShaderProgram& shaderProgram) {
+	glm::mat4 parentMat(1.0f);
+	if (selected) {
+		parentMat = glm::translate(parentMat, glm::vec3(0, ActiveYPosAdd, 0));
+	}
 	shaderProgram.bind();
 	for (int i = 0; i < ticTacToeSquares.size(); i++) {
-		ticTacToeSquares[i].render(shaderProgram);
+		ticTacToeSquares[i].render(shaderProgram, parentMat);
 	}
 	shaderProgram.unbind();
 }
