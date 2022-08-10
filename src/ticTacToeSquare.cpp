@@ -8,12 +8,13 @@ float lerp(float from, float to, float time) {
 }
 
 const float TicTacToeSquare::selectAnimTime = 0.45f;
-const float TicTacToeSquare::minY = 0.0f;
-const float TicTacToeSquare::maxY = 0.25f;
 
 TicTacToeSquare::TicTacToeSquare() {}
 
 TicTacToeSquare::TicTacToeSquare(float posX, float posZ, MeshRenderer* _squareMeshRenderer) {
+	minY = 0.0f;
+	maxY = 0.25f;
+
 	transform.pos.x = posX;
 	transform.pos.z = posZ;
 	transform.pos.y = minY;
@@ -22,7 +23,7 @@ TicTacToeSquare::TicTacToeSquare(float posX, float posZ, MeshRenderer* _squareMe
 	squareMeshRenderer = _squareMeshRenderer;
 }
 
-void TicTacToeSquare::update(bool spaceClicked, bool enterClicked, int turn) {
+void TicTacToeSquare::update(bool enterClicked, int turn) {
 	if (selected) {
 		transform.pos.y = lerp(minY, maxY, relativeTime);
 		relativeTime += deltaTime / TicTacToeSquare::selectAnimTime;
@@ -52,9 +53,6 @@ void TicTacToeSquare::update(bool spaceClicked, bool enterClicked, int turn) {
 
 void TicTacToeSquare::render(ShaderProgram& shaderProgram) {
 	shaderProgram.setInt("imgTex", curOptionTex);
-	if (officiallySelected) {
-		int a = 5;
-	}
 	shaderProgram.setInt("chosenMultiplier", curOption != NEITHER);
 	glm::mat4 modelMatrix;
 	transform.getModelMatrix(modelMatrix);
@@ -66,10 +64,10 @@ void TicTacToeSquare::render(ShaderProgram& shaderProgram) {
 
 void TicTacToeSquare::select() {
 	selected = true;
-	relativeTime = transform.pos.y / maxY;
+	relativeTime = (transform.pos.y - minY) / (maxY - minY);
 }
 
 void TicTacToeSquare::deSelect() {
 	selected = false;
-	relativeTime = 1.0f - (transform.pos.y / maxY);
+	relativeTime = 1.0f - ((transform.pos.y - minY) / (maxY - minY));
 }

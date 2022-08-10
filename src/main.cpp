@@ -20,11 +20,11 @@
 #include "renderer/lightFrameBuffer.h"
 #include "renderer/frameBuffer.h"
 #include "ticTacToeSquare.h"
+#include "ticTacGrid.h"
+#include "gridManager.h"
 
-#define GRID_ROWS 3
-#define GRID_COLS 3
-#define NUM_TTT_SQUARES (GRID_ROWS * GRID_COLS)
 float deltaTime = 0.0f;
+uint32_t curTimeMs;
 
 static float quadVertices[] = {
 	// positions   // texCoords
@@ -39,32 +39,6 @@ static float quadVertices[] = {
 
 int width = 800;
 int height = 600;
-
-bool getWinnerRow(const char board[GRID_ROWS][GRID_COLS], int row) {
-	return board[row][0] == board[row][1] && board[row][0] == board[row][2];
-}
-
-bool getWinnerCol(const char board[GRID_ROWS][GRID_COLS], int col) {
-	return board[0][col] == board[1][col] && board[1][col] == board[2][col];
-}
-
-int getWinnner(const char board[GRID_ROWS][GRID_COLS]) {
-	if (board[0][0] == board[1][1] && board[1][1] == board[2][2]) {
-		return board[0][0];
-	}
-	if (board[0][2] == board[1][1] && board[1][1] == board[2][0]) {
-		return board[0][2];
-	}
-	for (int i = 0; i < 3; i++) {
-		if (getWinnerRow(board, i)) {
-			return board[i][0];
-		}
-		if (getWinnerCol(board, i)) {
-			return board[0][i];
-		}
-	}
-	return NEITHER;
-}
 
 void lightPassFb(LightFrameBuffer& fb, glm::mat4& lightView, glm::mat4& lightProj, ShaderProgram& lightPassShaderProgram,
 	std::vector<MeshRenderer*>& meshRenderers, const std::vector<glm::mat4>& modelMats
@@ -155,10 +129,6 @@ int main(int argc, char* args[]) {
 	Texture xTex(xPath.c_str(), X_TEX_UNIT);
 	Texture oTex(oPath.c_str(), O_TEX_UNIT);
 
-	std::string selectionModelPath = "C:\\Sarthak\\programming\\RealTimeRendering\\src\\assets\\selection.obj";
-	std::string selectionTexPath = "C:\\Sarthak\\programming\\RealTimeRendering\\src\\assets\\selection.png";
-	MeshRenderer squareMeshRenderer(selectionModelPath, selectionTexPath);
-
 	Input input;
 	bool running = true;
 
@@ -201,38 +171,27 @@ int main(int argc, char* args[]) {
 	lVao.attachVBO(lVbo, 1, 2, sizeof(Vertex), offsetof(Vertex, texCoord));
 	lVao.unbind();
 
-	float xEntext = 10.0f;
-	float dirYPos = 10.0f;
-
 	int pcfLayers = 2;
-	int selected = 0;
-
-	std::vector<TicTacToeSquare> ticTacToeSquares;
-	ticTacToeSquares.resize(NUM_TTT_SQUARES);
-
-	std::vector<MeshRenderer*> meshRenderers;
-	meshRenderers.resize(NUM_TTT_SQUARES);
-
-	for (int row = 0; row < GRID_ROWS; row++) {
-		for (int col = 0; col < GRID_COLS; col++) {
-			ticTacToeSquares[row * 3 + col] = TicTacToeSquare(row, col, &squareMeshRenderer);
-			meshRenderers[row * 3 + col] = &squareMeshRenderer;
-		}
-	}
 
 	int turn = X;
 
+	int TARGET_FPS = 60;
+	float secPerFrame = 1.0f / TARGET_FPS;
+
+	GridManager gridManager;
+
 	while (running) {
-		uint32_t cur = SDL_GetTicks();
-		deltaTime = ((cur - prev) / 1000.0f);
-		prev = cur;
+		curTimeMs = SDL_GetTicks();
+		deltaTime = ((curTimeMs - prev) / 1000.0f);
+		while (deltaTime < secPerFrame) {
+			curTimeMs = SDL_GetTicks();
+			deltaTime = ((curTimeMs - prev) / 1000.0f);
+		}
+		prev = curTimeMs;
 
 		SDL_Event event;
-		bool selectionChanged = false;
-		bool spaceClicked = false;
-		bool enterClicked = false;
+		memset(&input, 0, sizeof(Input));
 		while (SDL_PollEvent(&event)) {
-			input.enterPressed = false;
 			ImGui_ImplSDL2_ProcessEvent(&event);
 			if (event.type == SDL_QUIT) {
 				running = false;
@@ -242,64 +201,34 @@ int main(int argc, char* args[]) {
 			}
 			if (event.type == SDL_KEYDOWN) {
 				SDL_Keycode keyDown = event.key.keysym.sym;
-				input.enterPressed = (keyDown == SDLK_RETURN);
-				if (keyDown == SDLK_RIGHT) {
-					selected = (selected - 1) % NUM_TTT_SQUARES;
-					selectionChanged = true;
+				if (keyDown == SDLK_RETURN) {
+					input.enter = true;
+				}
+				else if (keyDown == SDLK_RIGHT) {
+					input.rightArrow = true;
 				}
 				else if (keyDown == SDLK_LEFT) {
-					selected = (selected + 1) % NUM_TTT_SQUARES;
-					selectionChanged = true;
+					input.leftArrow = true;
 				}
 				else if (keyDown == SDLK_UP) {
-					selected = (selected - 3) % NUM_TTT_SQUARES;
-					selectionChanged = true;
+					input.upArrow = true;
 				}
 				else if (keyDown == SDLK_DOWN) {
-					selected = (selected + 3) % NUM_TTT_SQUARES;
-					selectionChanged = true;
+					input.downArrow = true;
 				}
-
-				if (keyDown == SDLK_RETURN) {
-					enterClicked = true;
-					selected = -1;
-				}
-
-				else if (keyDown == SDLK_SPACE) {
-					spaceClicked = true;
+				else if (keyDown == SDLK_SLASH) {
+					std::cout << "holding down slash" << std::endl;
+					input.slash = true;
 				}
 				else if (keyDown == SDLK_ESCAPE) {
 					running = false;
 				}
-				if (selected < 0) selected += NUM_TTT_SQUARES;
 			}
 		}
 
-		if (selectionChanged) {
-			std::cout << selected << std::endl;
-		}
+		gridManager.update(input, turn);
 
-		for (int i = 0; i < ticTacToeSquares.size(); i++) {
-			if (selectionChanged && ticTacToeSquares[i].selected) {
-				ticTacToeSquares[i].deSelect();
-			}
-			if (selectionChanged && i == selected) {
-				ticTacToeSquares[i].select();
-			}
-			ticTacToeSquares[i].update(spaceClicked, input.enterPressed, turn);
-		}
-
-		char board[GRID_ROWS][GRID_COLS]{};
-		for (int row = 0; row < GRID_ROWS; row++) {
-			for (int col = 0; col < GRID_COLS; col++) {
-				const TicTacToeSquare& ttts = ticTacToeSquares[(row * 3) + col];
-				board[row][col] = ttts.officiallySelected ? ttts.curOption : NEITHER;
-			}
-		}
-
-		int winner = getWinnner(board);
-
-		if (enterClicked) {
+		if (input.enter) {
 			turn = (turn == X) ? Y : X;
 		}
 
@@ -311,23 +240,23 @@ int main(int argc, char* args[]) {
 		glm::mat4 camView = glm::lookAt(camPos, lookAt, glm::vec3(0, 1, 0));
 
 		// light pass
-		glm::mat4 dirLightView = dirLightPassFb.getLightViewMat(glm::vec3(0, 0, 0) - (dirYPos * directionalLight.dir), directionalLight.dir);
-		glm::mat4 dirLightProj = dirLightPassFb.getDirLightProjMat(xEntext);
-
-		glm::mat4 spotLightView = spotLightPassFb.getLightViewMat(spotLight.pos, spotLight.dir);
-		glm::mat4 spotLightProj = spotLightPassFb.getSpotLightProjMat(spotLight.umbra);
-
 		std::vector<glm::mat4> modelMats;
-		modelMats.resize(NUM_TTT_SQUARES);
+		modelMats.resize(NUM_TTT_SQUARES * NUM_TTT_SQUARES);
 
-		for (int i = 0; i < ticTacToeSquares.size(); i++) {
-			TicTacToeSquare& ticTacToeSquare = ticTacToeSquares[i];
-			ticTacToeSquare.transform.getModelMatrix(modelMats[i]);
+		for (int row = 0; row < 3; row++) {
+			for (int col = 0; col < 3; col++) {
+				TicTacGrid& grid = gridManager.grids[row * 3 + col];
+				for (int i = 0; i < grid.ticTacToeSquares.size(); i++) {
+					TicTacToeSquare& ticTacToeSquare = grid.ticTacToeSquares[i];
+					ticTacToeSquare.transform.getModelMatrix(modelMats[((row * 3 + col) * 9) + i]);
+				}
+			}
 		}
 
-		lightPassFb(spotLightPassFb, spotLightView, spotLightProj, lightPassShaderProgram,
+		std::vector<MeshRenderer*> meshRenderers(NUM_TTT_SQUARES * NUM_TTT_SQUARES, gridManager.grids[0].ticTacToeSquares[0].squareMeshRenderer);
+		lightPassFb(spotLightPassFb, spotLight.spotLightView, spotLight.spotLightProj, lightPassShaderProgram,
 			meshRenderers, modelMats);
-		lightPassFb(dirLightPassFb, dirLightView, dirLightProj, lightPassShaderProgram,
+		lightPassFb(dirLightPassFb, directionalLight.dirLightView, directionalLight.dirLightProj, lightPassShaderProgram,
 			meshRenderers, modelMats);
 
 		// full color pass
@@ -337,7 +266,7 @@ int main(int argc, char* args[]) {
 
 		shaderProgram.setInt("numPointLights", 0);
 		shaderProgram.setInt("numDirectionalLights", 0);
-		shaderProgram.setInt("numSpotLights", 1);
+		shaderProgram.setInt("numSpotLights", 0);
 
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, spotLightPassFb.depthTexture);
@@ -356,29 +285,20 @@ int main(int argc, char* args[]) {
 
 		pointLight.setPointLightInShader(shaderProgram, 0);
 		directionalLight.setDirectionalLightInShader(shaderProgram, 0);
-		shaderProgram.setInt("directionalLights[0].samplerUnit", 2);
-		shaderProgram.setMat4("directionalLights[0].proj", dirLightProj);
-		shaderProgram.setMat4("directionalLights[0].view", dirLightView);
-
 		spotLight.setSpotLightInShader(shaderProgram, 0);
-		shaderProgram.setInt("spotLights[0].samplerUnit", 1);
-		shaderProgram.setMat4("spotLights[0].proj", spotLightProj);
-		shaderProgram.setMat4("spotLights[0].view", spotLightView);
 
 		shaderProgram.setInt("pcfLayers", pcfLayers);
 
-		for (int i = 0; i < ticTacToeSquares.size(); i++) {
-			ticTacToeSquares[i].render(shaderProgram);
-		}
+		gridManager.render(shaderProgram);
 
 		pointLight.debugRender();
 		spotLight.debugRender();
 
 		ImGui::Begin("Selection Transform");
 		ImGui::DragInt("pcf", &pcfLayers, 1, 0, 10);
-		ImGui::DragFloat3("transform", &ticTacToeSquares[0].transform.pos.x, 0.1f);
-		ImGui::DragFloat("scale", &ticTacToeSquares[0].transform.scale, 0.1f);
-		ImGui::DragFloat3("rotation", &ticTacToeSquares[0].transform.rot.x, 1, -180.0f, 180.0f);
+		ImGui::DragFloat3("transform", &gridManager.grids[0].ticTacToeSquares[0].transform.pos.x, 0.1f);
+		ImGui::DragFloat("scale", &gridManager.grids[0].ticTacToeSquares[0].transform.scale, 0.1f);
+		ImGui::DragFloat3("rotation", &gridManager.grids[0].ticTacToeSquares[0].transform.rot.x, 1, -180.0f, 180.0f);
 		ImGui::End();
 
 		ImGui::Begin("Camera");
@@ -398,8 +318,8 @@ int main(int argc, char* args[]) {
 		ImGui::Begin("dir Light");
 		ImGui::DragFloat3("dir", &directionalLight.dir.x, 0.1);
 		ImGui::DragFloat("multiplier", &directionalLight.multiplier, 0.05, 0);
-		ImGui::DragFloat("xEntext", &xEntext, 0.05);
-		ImGui::DragFloat("dirYPos", &dirYPos, 0.05, 0);
+		ImGui::DragFloat("xEntext", &directionalLight.xEntext, 0.05);
+		ImGui::DragFloat("dirYPos", &directionalLight.dirYPos, 0.05, 0);
 		ImGui::ColorPicker3("color", &directionalLight.color.r);
 		ImGui::End();
 

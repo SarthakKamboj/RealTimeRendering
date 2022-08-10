@@ -20,6 +20,9 @@ public:
 	float prenumbra;
 	float multiplier;
 
+	glm::mat4 spotLightView;
+	glm::mat4 spotLightProj;
+
 private:
 	Model model;
 };

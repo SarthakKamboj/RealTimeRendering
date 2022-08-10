@@ -38,18 +38,18 @@ void LightFrameBuffer::unbind() {
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-glm::mat4 LightFrameBuffer::getLightViewMat(const glm::vec3& lightPos, const glm::vec3& lightDir) {
+glm::mat4 LightFrameBuffer::GetLightViewMat(const glm::vec3& lightPos, const glm::vec3& lightDir) {
 	const glm::vec3 lookAtPos = lightPos + glm::normalize(lightDir) + glm::vec3(0, 0, 0.000001f);
 	return glm::lookAt(lightPos, lookAtPos, glm::vec3(0, 1, 0));
 }
 
-glm::mat4 LightFrameBuffer::getDirLightProjMat(float xExtent) {
+glm::mat4 LightFrameBuffer::GetDirLightProjMat(float xExtent) {
 	// float xExtent = 2.0f;
 	float ratio = (float)height / (float)width;
 	return glm::ortho(-xExtent, xExtent, -xExtent * ratio, xExtent * ratio, 0.1f, 100.0f);
 }
 
-glm::mat4 LightFrameBuffer::getSpotLightProjMat(float angle) {
+glm::mat4 LightFrameBuffer::GetSpotLightProjMat(float angle) {
 	return glm::perspective(angle, (float)width / (float)height, 0.1f, 100.0f);
 }
 

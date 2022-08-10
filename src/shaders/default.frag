@@ -150,6 +150,7 @@ void main() {
 	vec4 surfaceColor = texture(tex, texCoords);
 	vec4 selected = texture(imgTex, texCoords) * vec4(chosenMultiplier,chosenMultiplier,chosenMultiplier,chosenMultiplier);
 	FragColor = ((surfaceColor * selected) + vec4(1,0,0,1)) * 0.1;
+	FragColor = ((surfaceColor * selected * 0.5) + 0.4) + vec4(1,0,0,1);
 
 	for (int i = 0; i < numPointLights; i++) {
 		FragColor += calcPointLight(i, surfaceColor);

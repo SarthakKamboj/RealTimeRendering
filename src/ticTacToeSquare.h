@@ -17,7 +17,7 @@ class TicTacToeSquare {
 public:
 	TicTacToeSquare();
 	TicTacToeSquare(float posX, float posZ, MeshRenderer* _squareMeshRenderer);
-	void update(bool spaceClicked, bool enterClicked, int turn);
+	void update(bool enterClicked, int turn);
 	void render(ShaderProgram& shaderProgram);
 	void select();
 	void deSelect();
@@ -29,10 +29,11 @@ public:
 	bool officiallySelected = false;
 	int curOption = NEITHER;
 
+	float minY;
+	float maxY;
+
 private:
 	int curOptionTex = NEITHER;
 	float relativeTime = 0.0f;
 	static const float selectAnimTime;
-	static const float minY;
-	static const float maxY;
 };

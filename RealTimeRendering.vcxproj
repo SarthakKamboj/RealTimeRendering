@@ -165,6 +165,7 @@
     <ClCompile Include="ext\imgui-docking\imgui_widgets.cpp" />
     <ClCompile Include="ext\stb\stb_image.cpp" />
     <ClCompile Include="ext\tinyobjloader\tiny_obj_loader.cpp" />
+    <ClCompile Include="src\gridManager.cpp" />
     <ClCompile Include="src\lights\directionalLight.cpp" />
     <ClCompile Include="src\lights\spotLight.cpp" />
     <ClCompile Include="src\loadModel.cpp" />
@@ -178,6 +179,7 @@
     <ClCompile Include="src\renderer\texture.cpp" />
     <ClCompile Include="src\renderer\vao.cpp" />
     <ClCompile Include="src\renderer\vbo.cpp" />
+    <ClCompile Include="src\ticTacGrid.cpp" />
     <ClCompile Include="src\ticTacToeSquare.cpp" />
     <ClCompile Include="src\transform.cpp" />
   </ItemGroup>
@@ -205,6 +207,7 @@
     <ClInclude Include="ext\imgui-docking\imstb_truetype.h" />
     <ClInclude Include="ext\stb\stb_image.h" />
     <ClInclude Include="ext\tinyobjloader\tiny_obj_loader.h" />
+    <ClInclude Include="src\gridManager.h" />
     <ClInclude Include="src\input.h" />
     <ClInclude Include="src\lights\directionalLight.h" />
     <ClInclude Include="src\lights\pointLight.h" />
@@ -219,6 +222,7 @@
     <ClInclude Include="src\renderer\texture.h" />
     <ClInclude Include="src\renderer\vao.h" />
     <ClInclude Include="src\renderer\vbo.h" />
+    <ClInclude Include="src\ticTacGrid.h" />
     <ClInclude Include="src\ticTacToeSquare.h" />
     <ClInclude Include="src\transform.h" />
   </ItemGroup>

@@ -4,6 +4,7 @@
 #include <string>
 #include "renderer/shaderProgram.h"
 #include "renderer/meshRenderer.h"
+#include "renderer/lightFrameBuffer.h"
 #include "loadModel.h"
 
 class DirectionalLight {
@@ -16,7 +17,12 @@ public:
 	glm::vec3 dir;
 	glm::vec3 color;
 	glm::vec3 debugPos{};
-	float multiplier;
+	float multiplier = 1.0f;
+	float xEntext = 10.0f;
+	float dirYPos = 10.0f;
+
+	glm::mat4 dirLightView;
+	glm::mat4 dirLightProj;
 
 private:
 	Model model;
