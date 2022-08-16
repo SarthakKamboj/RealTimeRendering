@@ -16,16 +16,17 @@ float lerp(float from, float to, float time);
 class TicTacToeSquare {
 public:
 	TicTacToeSquare();
-	TicTacToeSquare(float posX, float posZ, MeshRenderer* _squareMeshRenderer);
+	// TicTacToeSquare(float posX, float posZ, MeshRenderer* _squareMeshRenderer);
+	TicTacToeSquare(float posX, float posZ, shader_program_t& shaderProgram);
 	void update(bool enterClicked, int& turn);
-	void render(ShaderProgram& shaderProgram, glm::mat4& parentMat);
+	// void render(shader_program_t& shaderProgram, glm::mat4& parentMat);
 	void select();
 	void deSelect();
 
-	Transform transform;
+	// Transform transform;
 	bool selected = false;
+	transform_t* transform;
 
-	MeshRenderer* squareMeshRenderer = NULL;
 	bool officiallySelected = false;
 	int curOption = NEITHER;
 
@@ -33,6 +34,7 @@ public:
 	float maxY;
 
 private:
+	int model_idx;
 	int curOptionTex = NEITHER;
 	float relativeTime = 0.0f;
 	static const float selectAnimTime;

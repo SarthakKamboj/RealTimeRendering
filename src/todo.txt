@@ -38,11 +38,10 @@ GOAL: make code data oriented
 				- indicies (ebo)
 			- things to consider
 				- some have vao and ebo
-				- some have only vao
 				- some have textures associated with them	
 				- will iterate over every model every frame so cache data here is hot
 				- proj and view matricies same for all, model mat changes, will also be hot data
-				- size of mat is 64 bytes and vao is basically just 4 byte int
+				- size of mat is 64 bytes and vao/ebo is basically just 4 byte int
 					- should separate these two to lower cache misses since at least vao can be 
 					accessed w/out cache misses
 				- types of models (require different shader programs)

@@ -1,6 +1,6 @@
 #include "transform.h"
 
-void Transform::getModelMatrix(glm::mat4& model) {
+void transform_t::get_model_matrix(glm::mat4& model) const {
 	model = glm::mat4(1.0f);
 	model = glm::translate(model, pos);
 	model = glm::rotate(model, glm::radians(rot.x), glm::vec3(1.0f, 0.0f, 0.0f));

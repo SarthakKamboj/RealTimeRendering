@@ -1,17 +1,15 @@
 #include "texture_manager.h"
+#include "../globals.h"
 
-void add_texture(texture_manager_t& texture_manager, const std::string& file_path, unsigned int tex_unit) {
-	
-	texture_bind_data_t texture_data{};
-	texture_data.tex_unit = tex_unit;
+extern globals_t globals;
+
+int add_texture(texture_manager_t& texture_manager, const std::string& file_path) {
 	
 	const std::vector<std::string>::iterator path_it = std::find(texture_manager.tex_paths.begin(), texture_manager.tex_paths.begin(), file_path);
 
 	if (path_it != texture_manager.tex_paths.cend()) {
 		int idx = std::distance(texture_manager.tex_paths.begin(), path_it);
-		texture_data.texture_id = texture_manager.textures_bind_data[idx].texture_id;
-		texture_manager.textures_bind_data.push_back(texture_data);
-		return;
+		return texture_manager.texture_ids[idx];
 	}
 	
 	stbi_set_flip_vertically_on_load(true);
@@ -20,9 +18,10 @@ void add_texture(texture_manager_t& texture_manager, const std::string& file_pat
 	int img_width, img_height, num_channels;
 	unsigned char* data = stbi_load(file_path.c_str(), &img_width, &img_height, &num_channels, 0);	
 
-	glGenTextures(1, &texture_data.texture_id);
-	glActiveTexture(GL_TEXTURE0 + tex_unit);
-	glBindTexture(GL_TEXTURE_2D, texture_data.texture_id);
+	unsigned int texture_id;
+	glGenTextures(1, &texture_id);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, texture_id);
 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
@@ -48,5 +47,6 @@ void add_texture(texture_manager_t& texture_manager, const std::string& file_pat
 	stbi_image_free(data);
 
 	texture_manager.tex_paths.push_back(std::string(file_path));
-	texture_manager.textures_bind_data.push_back(texture_data);
+	texture_manager.texture_ids.push_back(texture_id);
+	return texture_id;
 }

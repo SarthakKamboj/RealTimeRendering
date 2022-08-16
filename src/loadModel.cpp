@@ -1,5 +1,6 @@
 #include "loadModel.h"
 
+/*
 void Model::render() {
 	vao.bind();
 	if (indexEnabled) {
@@ -12,6 +13,7 @@ void Model::render() {
 }
 
 void loadModel(const std::string& modelPath, Model& model) {
+
 	tinyobj::attrib_t attrib;
 	std::vector<tinyobj::shape_t> shapes;
 	std::vector<tinyobj::material_t> materials;
@@ -73,3 +75,4 @@ void loadModel(const std::string& modelPath, Model& model) {
 	vbo.unbind();
 	ebo.unbind();
 }
+*/

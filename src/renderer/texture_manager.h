@@ -1,3 +1,5 @@
+#pragma once
+
 #include <vector>
 #include <string>
 #include "stb_image.h"
@@ -9,8 +11,8 @@ struct texture_bind_data_t {
 };
 
 struct texture_manager_t {
-	std::vector<texture_bind_data_t> textures_bind_data;
-	std::vector<std::string> tex_paths;	
+	std::vector<unsigned int> texture_ids;
+	std::vector<std::string> tex_paths;
 };
 
-void add_texture(texture_manager_t& texture_manager, const std::string& file_path, unsigned int tex_unit);
+int add_texture(texture_manager_t& texture_manager, const std::string& file_path);

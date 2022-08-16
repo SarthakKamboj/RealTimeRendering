@@ -3,28 +3,22 @@
 #include "glad/glad.h"
 #include "glm/glm.hpp"
 #include "glm/gtc/type_ptr.hpp"
-#include "texture.h"
+#include <string>
+#include <iostream>
+#include <fstream>
+#include "model.h"
 
-struct ShaderProgram {
-	ShaderProgram();
-	ShaderProgram(const char* vertexPath, const char* fragmentPath);
-	void setMat4(const char* varName, const glm::mat4& mat);
-	void setInt(const char* varName, int val);
-	void setFloat(const char* varName, float val);
-	void setVec3(const char* varName, const glm::vec3& vec3);
+struct shader_program_t {
+	models_manager_t models_manager;
+	GLuint program_id;
+	void set_mat_4(const char* var_name, const glm::mat4& mat);
+	void set_int(const char* var_name, int val);
+	void set_float(const char* var_name, float val);
+	void set_vec3(const char* var_name, const glm::vec3& vec3);
 	void bind();
 	void unbind();
-
-	GLuint programId;
-	GLuint createShader(const char* path, GLenum shaderType);
-
-	static int shaderId;
-	char name[50];
-	glm::vec3 color = glm::vec3(1.0f, 1.0f, 1.0f);
-	bool textureBasedColor = false;
-	Texture texture;
-	float normalDisplacement;
-
-private:
-	void loadDefaultTexture();
+	void render_models();
 };
+
+void create_shader_program(shader_program_t& shader_program, const std::string& vertex_path, const std::string& fragment_path);
+GLuint create_shader(const std::string& path, GLenum shader_type);

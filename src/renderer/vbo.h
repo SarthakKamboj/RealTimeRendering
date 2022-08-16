@@ -2,13 +2,10 @@
 
 #include "glad/glad.h"
 
-class VBO {
-public:
-	VBO();
-	void setData(float* vertices, int byteSizeOfVertices, GLenum usage);
+struct vbo_t {
+	vbo_t();
+	void set_data(float* vertices, int byteSizeOfVertices, GLenum usage);
 	void bind() const;
 	void unbind() const;
-
-private:
-	GLuint vbo;
+	GLuint id;
 };

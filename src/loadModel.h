@@ -1,5 +1,6 @@
 #pragma once
 
+/*
 #include <iostream>
 #include <tiny_obj_loader.h>
 #include <unordered_map>
@@ -45,3 +46,5 @@ namespace std {
 
 // void loadModel(const std::string& modelPath, std::vector<Vertex>& vertices, std::vector<unsigned int>& indices);
 void loadModel(const std::string& modelPath, Model& model);
+
+*/

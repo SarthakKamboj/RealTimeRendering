@@ -7,9 +7,9 @@
 #define NO_ACTIVE_GRID -10
 
 struct GridManager {
-	GridManager();
+	GridManager(shader_program_t& shader_program);
 	void update(const Input& input, int& turn);
-	void render(ShaderProgram& shaderProgram, glm::mat4& projection, glm::mat4& view);
+	// void render(shader_program_t& shaderProgram, glm::mat4& projection, glm::mat4& view);
 
 	std::vector<TicTacGrid> grids;
 	int activeGrid = NO_ACTIVE_GRID;

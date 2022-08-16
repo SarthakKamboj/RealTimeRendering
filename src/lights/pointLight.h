@@ -6,18 +6,14 @@
 #include "renderer/meshRenderer.h"
 #include "loadModel.h"
 
-class PointLight {
-public:
-	PointLight(const glm::vec3& color, const glm::vec3& position, float maxDist, float multiplier);
-	void setPointLightInShader(ShaderProgram& shaderProgram, int idx);
-	void debugRender();
+struct point_light_t {
+	point_light_t(const glm::vec3& color, const glm::vec3& position, float maxDist, float multiplier);
+	void set_point_light_in_shader(shader_program_t& shaderProgram, int idx);
+	void debug_render();
 
-	ShaderProgram shaderProgram;
+	shader_program_t shader_program;
 	glm::vec3 position;
 	glm::vec3 color;
-	float maxDist;
+	float max_dist;
 	float multiplier;
-
-private:
-	Model model;
 };

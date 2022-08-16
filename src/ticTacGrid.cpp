@@ -8,37 +8,37 @@ extern uint32_t curTimeMs;
 const uint32_t TicTacGrid::TimeBetweenClicks = 125;
 const float TicTacGrid::ActiveYPosAdd = 0.5f;
 
-TicTacGrid::TicTacGrid(const glm::vec2& _centerPos) {
+TicTacGrid::TicTacGrid(const glm::vec2& _centerPos, shader_program_t& shader_program) {
 
 	centerPos = _centerPos;
 
 	ticTacToeSquares.resize(NUM_TTT_SQUARES);
-	meshRenderers.resize(NUM_TTT_SQUARES);
+	// meshRenderers.resize(NUM_TTT_SQUARES);
 
 	std::string selectionModelPath = "C:\\Sarthak\\programming\\RealTimeRendering\\src\\assets\\selection.obj";
 	std::string selectionTexPath = "C:\\Sarthak\\programming\\RealTimeRendering\\src\\assets\\selection.png";
-	squareMeshRenderer = new MeshRenderer(selectionModelPath, selectionTexPath);
+	// squareMeshRenderer = new MeshRenderer(selectionModelPath, selectionTexPath);
 
 	std::string quadModelPath = "C:\\Sarthak\\programming\\RealTimeRendering\\src\\assets\\quad.obj";
-	loadModel(quadModelPath, winnerQuad);
 
 	const std::string vertPath = "C:\\Sarthak\\programming\\RealTimeRendering\\src\\shaders\\quadTexture.vert";
 	const std::string fragPath = "C:\\Sarthak\\programming\\RealTimeRendering\\src\\shaders\\quadTexture.frag";
-	winnerProgram = ShaderProgram(vertPath.c_str(), fragPath.c_str());
+	// winnerProgram = ShaderProgram(vertPath.c_str(), fragPath.c_str());
 
 	int startRow = _centerPos.x - 1;
 	int startCol = _centerPos.y - 1;
 	for (int row = 0; row < GRID_ROWS; row++) {
 		for (int col = 0; col < GRID_COLS; col++) {
-			ticTacToeSquares[row * 3 + col] = TicTacToeSquare(row + startRow, col + startCol, squareMeshRenderer);
-			meshRenderers[row * 3 + col] = squareMeshRenderer;
+			// ticTacToeSquares[row * 3 + col] = TicTacToeSquare(row + startRow, col + startCol, squareMeshRenderer);
+			ticTacToeSquares[row * 3 + col] = TicTacToeSquare(row + startRow, col + startCol, shader_program);
+			// meshRenderers[row * 3 + col] = squareMeshRenderer;
 		}
 	}
 
 	std::string xPath = "C:\\Sarthak\\programming\\RealTimeRendering\\src\\assets\\x.png";
 	std::string oPath = "C:\\Sarthak\\programming\\RealTimeRendering\\src\\assets\\o.png";
-	xTex = Texture(xPath.c_str(), 0);
-	oTex = Texture(oPath.c_str(), 1);
+	// xTex = Texture(xPath.c_str(), 0);
+	// oTex = Texture(oPath.c_str(), 1);
 }
 
 void TicTacGrid::update(const Input& input, int& turn, bool pollInput) {
@@ -114,14 +114,15 @@ void TicTacGrid::deSelect() {
 	ticTacToeSquares[selectedSquare].deSelect();
 }
 
-void TicTacGrid::render(ShaderProgram& shaderProgram, glm::mat4& projection, glm::mat4& view) {
+/*
+void TicTacGrid::render(shader_program_t& shaderProgram, glm::mat4& projection, glm::mat4& view) {
 	glm::mat4 parentMat(1.0f);
 	if (selected) {
 		parentMat = glm::translate(parentMat, glm::vec3(0, ActiveYPosAdd, 0));
 	}
 	shaderProgram.bind();
 	for (int i = 0; i < ticTacToeSquares.size(); i++) {
-		ticTacToeSquares[i].render(shaderProgram, parentMat);
+		// ticTacToeSquares[i].render(shaderProgram, parentMat);
 	}
 	shaderProgram.unbind();
 
@@ -140,7 +141,7 @@ void TicTacGrid::render(ShaderProgram& shaderProgram, glm::mat4& projection, glm
 		oTex.unbind();
 	}
 }
-
+*/
 
 bool TicTacGrid::GetWinnerRow(const char board[GRID_ROWS][GRID_COLS], int row) {
 	return board[row][0] == board[row][1] && board[row][0] == board[row][2];

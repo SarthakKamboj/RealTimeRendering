@@ -3,10 +3,10 @@
 #include <glm/glm.hpp>
 #include "glm/gtc/type_ptr.hpp"
 
-struct Transform {
-	glm::vec3 pos{};
-	float scale = 1.0f;
-	glm::vec3 rot{};
+struct transform_t {
+	glm::vec3 pos;
+	float scale;
+	glm::vec3 rot;
 
-	void getModelMatrix(glm::mat4& modelMatrix);
+	void get_model_matrix(glm::mat4& modelMatrix) const;
 };

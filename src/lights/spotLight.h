@@ -6,13 +6,12 @@
 #include "renderer/meshRenderer.h"
 #include "loadModel.h"
 
-class SpotLight {
-public:
-	SpotLight(const glm::vec3& color, const glm::vec3& position, glm::vec3& dir, float multiplier, float umbra, float prenumbra);
-	void setSpotLightInShader(ShaderProgram& shaderProgram, int idx);
-	void debugRender();
+struct spot_light_t {
+	spot_light_t(const glm::vec3& color, const glm::vec3& position, glm::vec3& dir, float multiplier, float umbra, float prenumbra);
+	void set_spot_light_in_shader_prog(shader_program_t& shader_program, int idx);
+	void debug_render();
 
-	ShaderProgram shaderProgram;
+	shader_program_t shader_program;
 	glm::vec3 dir;
 	glm::vec3 pos;
 	glm::vec3 color;
@@ -20,9 +19,6 @@ public:
 	float prenumbra;
 	float multiplier;
 
-	glm::mat4 spotLightView;
-	glm::mat4 spotLightProj;
-
-private:
-	Model model;
+	glm::mat4 spot_light_view;
+	glm::mat4 spot_light_proj;
 };

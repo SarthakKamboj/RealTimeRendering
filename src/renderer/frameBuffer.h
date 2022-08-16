@@ -2,14 +2,13 @@
 
 #include "glm/glm.hpp"
 
-struct FrameBuffer {
-	FrameBuffer();
+struct frame_buffer_t {
+	frame_buffer_t();
 	void bind();
 	void unbind();
 
-	static void ClearBuffers(const glm::vec3& color);
+	static void clear_frame_buffer(const glm::vec3& color);
 
-	unsigned int colorTexture;
-
-	unsigned int fbo;
+	unsigned int color_tex;
+	unsigned int id;
 };

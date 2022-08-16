@@ -99,6 +99,12 @@
     <ClCompile Include="src\window.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\renderer\texture_manager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\model.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="SDL2.dll" />
@@ -205,6 +211,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\window.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\renderer\texture_manager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\globals.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\model.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -2,7 +2,7 @@
 
 #include "glm/glm.hpp"
 
-struct Light {
+struct light_t {
 	float ambientFactor;
 	glm::vec3 lightColor;
 	glm::vec3 ambientColor;

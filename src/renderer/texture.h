@@ -1,5 +1,6 @@
 #pragma once
 
+/*
 class Texture {
 public:
 	Texture();
@@ -13,3 +14,5 @@ public:
 	bool createdTexture = false;
 	char filePath[200];
 };
+
+*/

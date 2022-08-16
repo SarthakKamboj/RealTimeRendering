@@ -3,13 +3,10 @@
 #include "glad/glad.h"
 #include "vbo.h"
 
-class VAO {
-public:
-	VAO();
-	void attachVBO(const VBO& vbo, GLuint index, int numFloatsPerDescriptor, int stride, int offsetInBytes);
+struct vao_t {
+	vao_t();
+	void attach_vbo(const vbo_t& vbo, GLuint index, int num_floats_per_descriptor, int stride, int offset_in_bytes);
 	void bind();
 	void unbind();
-
-private:
-	GLuint vao;
+	GLuint id;
 };

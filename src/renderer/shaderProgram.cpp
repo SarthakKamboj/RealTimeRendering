@@ -1,128 +1,137 @@
 #include "shaderProgram.h"
-#include <fstream>
-#include <string>
-#include <iostream>
+#include "globals.h"
 
-int ShaderProgram::shaderId = 0;
+#define MAX_ERR_LEN 1024
 
-ShaderProgram::ShaderProgram() {
-	programId = -1;
-	ShaderProgram::shaderId += 1;
+extern globals_t globals;
 
-	normalDisplacement = 0;
-
-	loadDefaultTexture();
-}
-
-ShaderProgram::ShaderProgram(const char* vertexPath, const char* fragmentPath) {
-	normalDisplacement = 0;
-	// create vertex and fragment shaders
-	GLuint vertexId = createShader(vertexPath, GL_VERTEX_SHADER);
-	sprintf_s(name, "Shader_%i", ShaderProgram::shaderId);
-	if (vertexId == -1) {
-		programId = -1;
+void create_shader_program(shader_program_t& shader_program, const std::string& vertex_path, const std::string& fragment_path) {
+	GLuint vertex_id = create_shader(vertex_path, GL_VERTEX_SHADER);
+	if (vertex_id == -1) {
+		shader_program.program_id = -1;
 		return;
 	}
-	GLuint fragmentId = createShader(fragmentPath, GL_FRAGMENT_SHADER);
-	if (fragmentId == -1) {
-		programId = -1;
+	GLuint frag_id = create_shader(fragment_path, GL_FRAGMENT_SHADER);
+	if (frag_id == -1) {
+		shader_program.program_id = -1;
 		return;
 	}
-	programId = glCreateProgram();
-	glAttachShader(programId, vertexId);
-	glAttachShader(programId, fragmentId);
-	glLinkProgram(programId);
+	shader_program.program_id = glCreateProgram();
+	GLuint& program_id = shader_program.program_id;
 
-	glDeleteShader(vertexId);
-	glDeleteShader(fragmentId);
+	glAttachShader(program_id, vertex_id);
+	glAttachShader(program_id, frag_id);
+	glLinkProgram(program_id);
 
-	loadDefaultTexture();
+	glDeleteShader(vertex_id);
+	glDeleteShader(frag_id);
 }
 
-void ShaderProgram::loadDefaultTexture() {
-	// create default texture
-	char imgPath[200] = {};
-	texture = Texture(imgPath, 0);
+GLuint create_shader(const std::string& path, GLenum shader_type) {
+	// get shader file contents
+	std::string line, file_contents;
+	std::ifstream file(path.c_str());
+
+	while (std::getline(file, line)) {
+		file_contents += line + "\n";
+	}
+
+	// compile shader and make sure there aren't any errors other return shader id
+	const char* file_code_char = file_contents.c_str();
+	GLuint shader_id = glCreateShader(shader_type);
+	glShaderSource(shader_id, 1, &file_code_char, NULL);
+	glCompileShader(shader_id);
+
+	GLint success = 0;
+	glGetShaderiv(shader_id, GL_COMPILE_STATUS, &success);
+
+	if (success == GL_FALSE) {
+		std::cout << (shader_type == GL_VERTEX_SHADER ? "vertex" : "fragment") << " shader compilation failed" << std::endl;
+		int maxErrorLength = MAX_ERR_LEN;
+		char errorInfo[MAX_ERR_LEN];
+		glGetShaderInfoLog(shader_id, maxErrorLength, &maxErrorLength, errorInfo);
+		std::cout << "ERROR: " << errorInfo << std::endl;
+		return -1;
+	}
+
+	return shader_id;
 }
 
-void ShaderProgram::bind() {
-	glUseProgram(programId);
-}
-
-void ShaderProgram::unbind() {
-	glUseProgram(0);
-}
-
-void ShaderProgram::setMat4(const char* varName, const glm::mat4& mat) {
-	if (programId == -1) return;
+void shader_program_t::set_mat_4(const char* var_name, const glm::mat4& mat) {
+	if (program_id == -1) return;
 	bind();
-	GLint loc = glGetUniformLocation(programId, varName);
+	GLint loc = glGetUniformLocation(program_id, var_name);
 	if (loc == -1) {
-		std::cout << varName << " doesn't exist" << std::endl;
+		std::cout << var_name << " doesn't exist" << std::endl;
 	}
 	glUniformMatrix4fv(loc, 1, GL_FALSE, glm::value_ptr(mat));
 	unbind();
 }
 
-void ShaderProgram::setFloat(const char* varName, float val) {
-	if (programId == -1) return;
+void shader_program_t::set_float(const char* var_name, float val) {
+	if (program_id == -1) return;
 	bind();
-	GLint loc = glGetUniformLocation(programId, varName);
+	GLint loc = glGetUniformLocation(program_id, var_name);
 	if (loc == -1) {
-		std::cout << varName << " doesn't exist" << std::endl;
+		std::cout << var_name << " doesn't exist" << std::endl;
 	}
 	glUniform1f(loc, val);
 	unbind();
 }
 
-void ShaderProgram::setVec3(const char* varName, const glm::vec3& vec3) {
-	if (programId == -1) return;
+void shader_program_t::set_vec3(const char* var_name, const glm::vec3& vec3) {
+	if (program_id == -1) return;
 	bind();
-	GLint loc = glGetUniformLocation(programId, varName);
+	GLint loc = glGetUniformLocation(program_id, var_name);
 	if (loc == -1) {
-		std::cout << varName << " doesn't exist" << std::endl;
+		std::cout << var_name << " doesn't exist" << std::endl;
 	}
 	glUniform3fv(loc, 1, glm::value_ptr(vec3));
 	unbind();
 }
 
-void ShaderProgram::setInt(const char* varName, int val) {
-	if (programId == -1) return;
+void shader_program_t::set_int(const char* var_name, int val) {
+	if (program_id == -1) return;
 	bind();
-	GLint loc = glGetUniformLocation(programId, varName);
+	GLint loc = glGetUniformLocation(program_id, var_name);
 	if (loc == -1) {
-		std::cout << varName << " doesn't exist" << std::endl;
+		std::cout << var_name << " doesn't exist" << std::endl;
 	}
 	glUniform1i(loc, val);
 	unbind();
 }
 
-GLuint ShaderProgram::createShader(const char* path, GLenum shaderType) {
-	// get shader file contents
-	std::string line, fileContents;
-	std::ifstream file(path);
-
-	while (std::getline(file, line)) {
-		fileContents += line + "\n";
-	}
-
-	// compile shader and make sure there aren't any errors other return shader id
-	const char* fileCodeChar = fileContents.c_str();
-	GLuint shaderId = glCreateShader(shaderType);
-	glShaderSource(shaderId, 1, &fileCodeChar, NULL);
-	glCompileShader(shaderId);
-
-	GLint success = 0;
-	glGetShaderiv(shaderId, GL_COMPILE_STATUS, &success);
-
-	if (success == GL_FALSE) {
-		std::cout << (shaderType == GL_VERTEX_SHADER ? "vertex" : "fragment") << " shader compilation failed" << std::endl;
-		int maxErrorLength = 1024;
-		char errorInfo[1024];
-		glGetShaderInfoLog(shaderId, maxErrorLength, &maxErrorLength, errorInfo);
-		std::cout << "ERROR: " << errorInfo << std::endl;
-		return -1;
-	}
-
-	return shaderId;
+void shader_program_t::bind() {
+	glUseProgram(program_id);
 }
+
+void shader_program_t::unbind() {
+	glUseProgram(0);
+}
+
+void shader_program_t::render_models() {
+
+	const std::vector<transform_t>& transforms = models_manager.transforms;
+	const models_data_t& models_data = *globals.models_data;
+
+	for (int i = 0; i < transforms.size(); i++) {
+		glm::mat4 model_mat(1.0f);
+		transforms[i].get_model_matrix(model_mat);
+		set_mat_4("model", model_mat);
+		bind();
+
+		int model_vert_idx = models_manager.model_vertex_idxs[i];
+		const model_vertex_data_t& model = models_data.vertices_data[model_vert_idx];
+		const std::vector<texture_bind_data_t>& textures_data = models_manager.model_textures_data[i];
+
+		for (const texture_bind_data_t& texture_data : textures_data) {
+			glActiveTexture(GL_TEXTURE0 + texture_data.tex_unit);
+			glBindTexture(GL_TEXTURE_2D, texture_data.texture_id);
+		}
+
+		glBindVertexArray(model.vao);
+		glDrawElements(GL_TRIANGLES, model.num_indices_to_render, GL_UNSIGNED_INT, 0);
+		unbind();
+	}
+}
+

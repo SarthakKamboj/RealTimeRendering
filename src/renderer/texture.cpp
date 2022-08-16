@@ -2,6 +2,7 @@
 #include "stb_image.h"
 #include "glad/glad.h"
 
+/*
 Texture::Texture() {
 	texUnit = -1;
 	sprintf_s(filePath, "");
@@ -66,3 +67,5 @@ void Texture::unbind() {
 	glActiveTexture(GL_TEXTURE0 + texUnit);
 	glBindTexture(GL_TEXTURE_2D, 0);
 }
+
+*/

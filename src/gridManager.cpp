@@ -4,10 +4,11 @@ extern uint32_t curTimeMs;
 
 const uint32_t GridManager::TimeBetweenClicks = 100;
 
-GridManager::GridManager() {
+GridManager::GridManager(shader_program_t& shader_program) {
 	for (int row = 0; row < 3; row++) {
 		for (int col = 0; col < 3; col++) {
-			grids.push_back(TicTacGrid(glm::vec2((row - 1) * 3, (col - 1) * 3)));
+			TicTacGrid tic_tac_grid(glm::vec2((row - 1) * 3, (col - 1) * 3), shader_program);
+			grids.push_back(tic_tac_grid);
 		}
 	}
 }
@@ -101,8 +102,10 @@ void GridManager::update(const Input& input, int& turn) {
 	}
 }
 
-void GridManager::render(ShaderProgram& shaderProgram, glm::mat4& projection, glm::mat4& view) {
+/*
+void GridManager::render(shader_program_t& shaderProgram, glm::mat4& projection, glm::mat4& view) {
 	for (TicTacGrid& grid : grids) {
 		grid.render(shaderProgram, projection, view);
 	}
 }
+*/

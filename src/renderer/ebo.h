@@ -2,13 +2,10 @@
 
 #include "glad/glad.h"
 
-class EBO {
-public:
-	EBO();
-	void setData(unsigned int* indicies, int sizeOfIndicies, GLenum usage);
+struct ebo_t {
+	ebo_t();
+	void set_data(unsigned int* indicies, int size_of_indices, GLenum usage);
 	void bind();
 	void unbind();
-
-private:
-	GLuint ebo;
+	GLuint id;
 };

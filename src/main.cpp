@@ -19,6 +19,10 @@
 #include "ticTacGrid.h"
 #include "gridManager.h"
 #include "window.h"
+#include "globals.h"
+#include "renderer/texture_manager.h"
+#include "model.h"
+#include "renderer/shaderProgram.h"
 
 float deltaTime = 0.0f;
 uint32_t curTimeMs;
@@ -37,34 +41,56 @@ static float quadVertices[] = {
 int width = 800;
 int height = 600;
 
-void lightPassFb(LightFrameBuffer& fb, glm::mat4& lightView, glm::mat4& lightProj, ShaderProgram& lightPassShaderProgram,
-	std::vector<MeshRenderer*>& meshRenderers, const std::vector<glm::mat4>& modelMats
-) {
-	fb.bind();
-	FrameBuffer::ClearBuffers(glm::vec3(0, 0, 0));
+void light_pass(light_frame_buffer_t& light_fb, glm::mat4& lightView, glm::mat4& lightProj, shader_program_t& light_pass_program) {
+	light_fb.bind();
+	frame_buffer_t::clear_frame_buffer(glm::vec3(0, 0, 0));
 
-	lightPassShaderProgram.setMat4("view", lightView);
-	lightPassShaderProgram.setMat4("projection", lightProj);
+	light_pass_program.set_mat_4("view", lightView);
+	light_pass_program.set_mat_4("projection", lightProj);
+	light_pass_program.render_models();
 
-	for (int i = 0; i < modelMats.size(); i++) {
-		lightPassShaderProgram.setMat4("model", modelMats[i]);
-		lightPassShaderProgram.bind();
-		meshRenderers[i]->model.render();
-		lightPassShaderProgram.unbind();
+	/*
+	const std::vector<transform_t>& transforms = light_pass_program.models.transforms;
+	for (int i = 0; i < transforms.size(); i++) {
+		glm::mat4 model_mat(1.0f);
+		light_pass_program.models.transforms[i].get_model_matrix(model_mat);
+		light_pass_program.set_mat_4("model", model_mat);
+		light_pass_program.bind();
+
+		const model_vertex_data_t& model = light_pass_program.models.vertices_data[i];
+		const std::vector<texture_bind_data_t>& textures_data = light_pass_program.models.model_textures_data[i];
+
+		for (const texture_bind_data_t& texture_data : textures_data) {
+			glActiveTexture(GL_TEXTURE0 + texture_data.tex_unit);
+			glBindTexture(GL_TEXTURE_2D, texture_data.texture_id);
+		}
+
+		glBindVertexArray(model.vao);
+		glDrawElements(GL_TRIANGLES, model.num_indices_to_render, GL_UNSIGNED_INT, 0);
+		light_pass_program.unbind();
 	}
+*/
 
-	fb.unbind();
+	light_fb.unbind();
 }
+
+globals_t globals;
 
 int main(int argc, char* args[]) {
 
 	window_t window(800, 600);
 
-	const std::string vertPath = "C:\\Sarthak\\programming\\RealTimeRendering\\src\\shaders\\default.vert";
-	const std::string fragPath = "C:\\Sarthak\\programming\\RealTimeRendering\\src\\shaders\\default.frag";
-	ShaderProgram shaderProgram(vertPath.c_str(), fragPath.c_str());
+	texture_manager_t texture_manager{};
+	globals.texture_manager = &texture_manager;
 
-	shaderProgram.setInt("tex", 0);
+	const std::string default_vert_path = "C:\\Sarthak\\programming\\RealTimeRendering\\src\\shaders\\default.vert";
+	const std::string default_frag_path = "C:\\Sarthak\\programming\\RealTimeRendering\\src\\shaders\\default.frag";
+	shader_program_t default_shader_program{};
+	create_shader_program(default_shader_program, default_vert_path, default_frag_path);
+	globals.default_shader_program = &default_shader_program;
+
+	models_data_t models_data{};
+	globals.models_data = &models_data;
 
 	float radius = 12.0f;
 	float yPos = 10.0f;
@@ -75,59 +101,37 @@ int main(int argc, char* args[]) {
 	float ratio = (float)height / (float)width;
 	glm::mat4 orthoProj = glm::ortho(-xExtent, xExtent, -xExtent * ratio, xExtent * ratio, 0.1f, 100.0f);
 
-	std::string xPath = "C:\\Sarthak\\programming\\RealTimeRendering\\src\\assets\\x.png";
-	std::string oPath = "C:\\Sarthak\\programming\\RealTimeRendering\\src\\assets\\o.png";
-	Texture xTex(xPath.c_str(), X_TEX_UNIT);
-	Texture oTex(oPath.c_str(), O_TEX_UNIT);
-
 	bool running = true;
 	uint32_t prev = SDL_GetTicks();
 
 	glm::vec3 pointLightColor(1, 0, 0);
 	glm::vec3 pointLightPos(0, 3, 0);
-	PointLight pointLight(pointLightColor, pointLightPos, 20.0f, 3.0f);
+	point_light_t point_light(pointLightColor, pointLightPos, 20.0f, 3.0f);
 
 	glm::vec3 dirLightColor(1, 1, 1);
 	glm::vec3 dir(0, -1, 0);
-	DirectionalLight directionalLight(dirLightColor, dir, 1.0f);
+	dir_light_t dir_light(dirLightColor, dir, 1.0f);
 
 	glm::vec3 spotLightColor(1, 1, 1);
 	glm::vec3 spotLightPos(0, 4, 0.2f);
 	glm::vec3 spotLightDir(0, -1, 0);
-	SpotLight spotLight(spotLightColor, spotLightPos, spotLightDir, 20.0f, glm::radians(60.0f), glm::radians(45.0f));
+	spot_light_t spot_light(spotLightColor, spotLightPos, spotLightDir, 20.0f, glm::radians(60.0f), glm::radians(45.0f));
 
-	LightFrameBuffer spotLightPassFb;
-	LightFrameBuffer dirLightPassFb;
+	light_frame_buffer_t spot_light_fb;
+	light_frame_buffer_t dir_light_fb;
 
-	const std::string lightPassVertPath = "C:\\Sarthak\\programming\\RealTimeRendering\\src\\shaders\\lightPass.vert";
-	const std::string lightPassFragPath = "C:\\Sarthak\\programming\\RealTimeRendering\\src\\shaders\\lightPass.frag";
-	ShaderProgram lightPassShaderProgram(lightPassVertPath.c_str(), lightPassFragPath.c_str());
-
-	Model lightPassRenderModel;
-	for (int i = 0; i < sizeof(quadVertices) / sizeof(float) / 4; i++) {
-		Vertex vertex{};
-		vertex.pos = glm::vec3(quadVertices[i * 4 + 0], quadVertices[i * 4 + 1], 0.0f);
-		vertex.texCoord = glm::vec2(quadVertices[i * 4 + 2], quadVertices[i * 4 + 3]);
-		lightPassRenderModel.vertices.push_back(vertex);
-	}
-	lightPassRenderModel.indexEnabled = false;
-	VBO& lVbo = lightPassRenderModel.vbo;
-	VAO& lVao = lightPassRenderModel.vao;
-
-	lVbo.setData((float*)&lightPassRenderModel.vertices[0], lightPassRenderModel.vertices.size() * sizeof(Vertex), GL_STATIC_DRAW);
-	lVao.bind();
-	lVao.attachVBO(lVbo, 0, 3, sizeof(Vertex), offsetof(Vertex, pos));
-	lVao.attachVBO(lVbo, 1, 2, sizeof(Vertex), offsetof(Vertex, texCoord));
-	lVao.unbind();
+	const std::string light_pass_vert_path = "C:\\Sarthak\\programming\\RealTimeRendering\\src\\shaders\\lightPass.vert";
+	const std::string light_pass_frag_path = "C:\\Sarthak\\programming\\RealTimeRendering\\src\\shaders\\lightPass.frag";
+	shader_program_t light_pass_program{};
+	create_shader_program(light_pass_program, light_pass_vert_path, light_pass_frag_path);
 
 	int pcfLayers = 2;
-
 	int turn = TTT_X;
 
 	int TARGET_FPS = 60;
 	float secPerFrame = 1.0f / TARGET_FPS;
 
-	GridManager gridManager;
+	GridManager grid_manager(default_shader_program);
 
 	while (running) {
 		curTimeMs = SDL_GetTicks();
@@ -143,7 +147,7 @@ int main(int argc, char* args[]) {
 
 		running = !(input.quit || input.escape);
 
-		gridManager.update(input, turn);
+		grid_manager.update(input, turn);
 
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplSDL2_NewFrame();
@@ -153,6 +157,7 @@ int main(int argc, char* args[]) {
 		glm::mat4 camView = glm::lookAt(camPos, lookAt, glm::vec3(0, 1, 0));
 
 		// light pass
+		/*
 		std::vector<glm::mat4> modelMats;
 		modelMats.resize(NUM_TTT_SQUARES * NUM_TTT_SQUARES);
 
@@ -165,53 +170,55 @@ int main(int argc, char* args[]) {
 				}
 			}
 		}
+		*/
 
-		std::vector<MeshRenderer*> meshRenderers(NUM_TTT_SQUARES * NUM_TTT_SQUARES, gridManager.grids[0].ticTacToeSquares[0].squareMeshRenderer);
-		lightPassFb(spotLightPassFb, spotLight.spotLightView, spotLight.spotLightProj, lightPassShaderProgram,
-			meshRenderers, modelMats);
-		lightPassFb(dirLightPassFb, directionalLight.dirLightView, directionalLight.dirLightProj, lightPassShaderProgram,
-			meshRenderers, modelMats);
+		// std::vector<MeshRenderer*> meshRenderers(NUM_TTT_SQUARES * NUM_TTT_SQUARES, gridManager.grids[0].ticTacToeSquares[0].squareMeshRenderer);
+		// light_pass(spot_light_fb, spot_light.spot_light_view, spot_light.spot_light_proj, light_pass_program);
+		// light_pass(dir_light_fb, dir_light.dir_light_view, dir_light.dir_light_proj, light_pass_program);
 
 		// full color pass
 		glClearColor(0, 0, 0, 1);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glViewport(0, 0, width, height);
 
-		shaderProgram.setInt("numPointLights", 0);
-		shaderProgram.setInt("numDirectionalLights", 0);
-		shaderProgram.setInt("numSpotLights", 0);
+		default_shader_program.set_int("numPointLights", 0);
+		default_shader_program.set_int("numDirectionalLights", 0);
+		default_shader_program.set_int("numSpotLights", 0);
 
 		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, spotLightPassFb.depthTexture);
+		glBindTexture(GL_TEXTURE_2D, spot_light_fb.depth_tex);
 		glActiveTexture(GL_TEXTURE2);
-		glBindTexture(GL_TEXTURE_2D, dirLightPassFb.depthTexture);
-		xTex.bind();
-		oTex.bind();
+		glBindTexture(GL_TEXTURE_2D, dir_light_fb.depth_tex);
 
-		shaderProgram.setMat4("projection", perspProj);
-		pointLight.shaderProgram.setMat4("projection", perspProj);
-		spotLight.shaderProgram.setMat4("projection", perspProj);
+		default_shader_program.set_mat_4("projection", perspProj);
+		point_light.shader_program.set_mat_4("projection", perspProj);
+		spot_light.shader_program.set_mat_4("projection", perspProj);
 
-		shaderProgram.setMat4("view", camView);
-		pointLight.shaderProgram.setMat4("view", camView);
-		spotLight.shaderProgram.setMat4("view", camView);
+		default_shader_program.set_mat_4("view", camView);
+		point_light.shader_program.set_mat_4("view", camView);
+		spot_light.shader_program.set_mat_4("view", camView);
 
-		pointLight.setPointLightInShader(shaderProgram, 0);
-		directionalLight.setDirectionalLightInShader(shaderProgram, 0);
-		spotLight.setSpotLightInShader(shaderProgram, 0);
+		point_light.set_point_light_in_shader(default_shader_program, 0);
+		dir_light.set_dir_light_in_shader(default_shader_program, 0);
+		spot_light.set_spot_light_in_shader_prog(default_shader_program, 0);
 
-		shaderProgram.setInt("pcfLayers", pcfLayers);
+		default_shader_program.set_int("pcfLayers", pcfLayers);
+		default_shader_program.render_models();
 
-		gridManager.render(shaderProgram, perspProj, camView);
+		// gridManager.render(default_shader_program, perspProj, camView);
 
-		pointLight.debugRender();
-		spotLight.debugRender();
+		// point_light.debug_render();
+		// spot_light.debug_render();
 
-		ImGui::Begin("Selection Transform");
-		ImGui::DragInt("pcf", &pcfLayers, 1, 0, 10);
+		// ImGui::Begin("Selection Transform");
+		// ImGui::DragInt("pcf", &pcfLayers, 1, 0, 10);
+		/*
 		ImGui::DragFloat3("transform", &gridManager.grids[0].ticTacToeSquares[0].transform.pos.x, 0.1f);
 		ImGui::DragFloat("scale", &gridManager.grids[0].ticTacToeSquares[0].transform.scale, 0.1f);
 		ImGui::DragFloat3("rotation", &gridManager.grids[0].ticTacToeSquares[0].transform.rot.x, 1, -180.0f, 180.0f);
+		*/
+
+		/*
 		ImGui::End();
 
 		ImGui::Begin("Camera");
@@ -222,31 +229,31 @@ int main(int argc, char* args[]) {
 		ImGui::End();
 
 		ImGui::Begin("point Light");
-		ImGui::DragFloat3("pos", &pointLight.position.x, 0.1);
-		ImGui::DragFloat("max dist", &pointLight.maxDist, 0.1, 1);
-		ImGui::DragFloat("multiplier", &pointLight.multiplier, 0.05, 0);
-		ImGui::ColorPicker3("color", &pointLight.color.r);
+		ImGui::DragFloat3("pos", &point_light.position.x, 0.1);
+		ImGui::DragFloat("max dist", &point_light.max_dist, 0.1, 1);
+		ImGui::DragFloat("multiplier", &point_light.multiplier, 0.05, 0);
+		ImGui::ColorPicker3("color", &point_light.color.r);
 		ImGui::End();
 
 		ImGui::Begin("dir Light");
-		ImGui::DragFloat3("dir", &directionalLight.dir.x, 0.1);
-		ImGui::DragFloat("multiplier", &directionalLight.multiplier, 0.05, 0);
-		ImGui::DragFloat("xEntext", &directionalLight.xEntext, 0.05);
-		ImGui::DragFloat("dirYPos", &directionalLight.dirYPos, 0.05, 0);
-		ImGui::ColorPicker3("color", &directionalLight.color.r);
+		ImGui::DragFloat3("dir", &dir_light.dir.x, 0.1);
+		ImGui::DragFloat("multiplier", &dir_light.multiplier, 0.05, 0);
+		ImGui::DragFloat("xEntext", &dir_light.x_extent, 0.05);
+		ImGui::DragFloat("dirYPos", &dir_light.dir_y_pos, 0.05, 0);
+		ImGui::ColorPicker3("color", &dir_light.color.r);
 		ImGui::End();
 
 		ImGui::Begin("spot Light");
-		ImGui::DragFloat3("dir", &spotLight.dir.x, 0.1);
-		ImGui::DragFloat3("pos", &spotLight.pos.x, 0.1);
-		ImGui::DragFloat("multiplier", &spotLight.multiplier, 0.05, 0);
-		ImGui::DragFloat("umbra", &spotLight.umbra, 0.01, 0, glm::radians(90.0f));
-		ImGui::DragFloat("prenumbra", &spotLight.prenumbra, 0.01, 0, glm::radians(90.0f));
-		ImGui::ColorPicker3("color", &spotLight.color.r);
+		ImGui::DragFloat3("dir", &spot_light.dir.x, 0.1);
+		ImGui::DragFloat3("pos", &spot_light.pos.x, 0.1);
+		ImGui::DragFloat("multiplier", &spot_light.multiplier, 0.05, 0);
+		ImGui::DragFloat("umbra", &spot_light.umbra, 0.01, 0, glm::radians(90.0f));
+		ImGui::DragFloat("prenumbra", &spot_light.prenumbra, 0.01, 0, glm::radians(90.0f));
+		ImGui::ColorPicker3("color", &spot_light.color.r);
 		ImGui::End();
+		*/
 
 		window.swap();
-
 	}
 
 	return -1;

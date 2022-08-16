@@ -1,5 +1,6 @@
 #pragma once
 
+/*
 #include "renderer/vbo.h"
 #include "renderer/vao.h"
 #include "renderer/ebo.h"
@@ -16,3 +17,4 @@ struct MeshRenderer {
 
 	void render();
 };
+*/
