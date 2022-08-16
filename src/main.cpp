@@ -227,9 +227,9 @@ int main(int argc, char* args[]) {
 
 		gridManager.update(input, turn);
 
-		if (input.enter) {
-			turn = (turn == X) ? Y : X;
-		}
+		// if (input.enter) {
+			// turn = (turn == X) ? Y : X;
+		// }
 
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplSDL2_NewFrame();
@@ -288,7 +288,7 @@ int main(int argc, char* args[]) {
 
 		shaderProgram.setInt("pcfLayers", pcfLayers);
 
-		gridManager.render(shaderProgram);
+		gridManager.render(shaderProgram, perspProj, camView);
 
 		pointLight.debugRender();
 		spotLight.debugRender();

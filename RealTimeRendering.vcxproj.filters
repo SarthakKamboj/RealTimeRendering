@@ -107,6 +107,8 @@
     <None Include="src\shaders\lightPass.frag" />
     <None Include="src\shaders\lightDepthRender.vert" />
     <None Include="src\shaders\lightDepthRender.frag" />
+    <None Include="src\shaders\quadTexture.frag" />
+    <None Include="src\shaders\quadTexture.vert" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\input.h">

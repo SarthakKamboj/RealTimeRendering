@@ -193,6 +193,8 @@
     <None Include="src\shaders\lightDepthRender.vert" />
     <None Include="src\shaders\lightPass.frag" />
     <None Include="src\shaders\lightPass.vert" />
+    <None Include="src\shaders\quadTexture.frag" />
+    <None Include="src\shaders\quadTexture.vert" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ext\glad\include\glad\glad.h" />

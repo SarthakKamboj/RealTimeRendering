@@ -5,10 +5,12 @@
 extern float deltaTime;
 extern uint32_t curTimeMs;
 
-const uint32_t TicTacGrid::TimeBetweenClicks = 300;
+const uint32_t TicTacGrid::TimeBetweenClicks = 125;
 const float TicTacGrid::ActiveYPosAdd = 0.5f;
 
-TicTacGrid::TicTacGrid(const glm::vec2& centerPos) {
+TicTacGrid::TicTacGrid(const glm::vec2& _centerPos) {
+
+	centerPos = _centerPos;
 
 	ticTacToeSquares.resize(NUM_TTT_SQUARES);
 	meshRenderers.resize(NUM_TTT_SQUARES);
@@ -17,17 +19,33 @@ TicTacGrid::TicTacGrid(const glm::vec2& centerPos) {
 	std::string selectionTexPath = "C:\\Sarthak\\programming\\RealTimeRendering\\src\\assets\\selection.png";
 	squareMeshRenderer = new MeshRenderer(selectionModelPath, selectionTexPath);
 
-	int startRow = centerPos.x - 1;
-	int startCol = centerPos.y - 1;
+	std::string quadModelPath = "C:\\Sarthak\\programming\\RealTimeRendering\\src\\assets\\quad.obj";
+	loadModel(quadModelPath, winnerQuad);
+
+	const std::string vertPath = "C:\\Sarthak\\programming\\RealTimeRendering\\src\\shaders\\quadTexture.vert";
+	const std::string fragPath = "C:\\Sarthak\\programming\\RealTimeRendering\\src\\shaders\\quadTexture.frag";
+	winnerProgram = ShaderProgram(vertPath.c_str(), fragPath.c_str());
+
+	int startRow = _centerPos.x - 1;
+	int startCol = _centerPos.y - 1;
 	for (int row = 0; row < GRID_ROWS; row++) {
 		for (int col = 0; col < GRID_COLS; col++) {
 			ticTacToeSquares[row * 3 + col] = TicTacToeSquare(row + startRow, col + startCol, squareMeshRenderer);
 			meshRenderers[row * 3 + col] = squareMeshRenderer;
 		}
 	}
+
+	std::string xPath = "C:\\Sarthak\\programming\\RealTimeRendering\\src\\assets\\x.png";
+	std::string oPath = "C:\\Sarthak\\programming\\RealTimeRendering\\src\\assets\\o.png";
+	xTex = Texture(xPath.c_str(), 0);
+	oTex = Texture(oPath.c_str(), 1);
 }
 
-void TicTacGrid::update(const Input& input, int turn, bool pollInput) {
+void TicTacGrid::update(const Input& input, int& turn, bool pollInput) {
+
+	if (winner != NEITHER) {
+		pollInput = false;
+	}
 
 	bool selectionChanged = false;
 	if (curTimeMs - timeOfLastClick > TimeBetweenClicks && pollInput) {
@@ -73,15 +91,17 @@ void TicTacGrid::update(const Input& input, int turn, bool pollInput) {
 		}
 	}
 
-	char board[GRID_ROWS][GRID_COLS]{};
-	for (int row = 0; row < GRID_ROWS; row++) {
-		for (int col = 0; col < GRID_COLS; col++) {
-			const TicTacToeSquare& ttts = ticTacToeSquares[(row * 3) + col];
-			board[row][col] = ttts.officiallySelected ? ttts.curOption : NEITHER;
+	if (winner == NEITHER) {
+		char board[GRID_ROWS][GRID_COLS]{};
+		for (int row = 0; row < GRID_ROWS; row++) {
+			for (int col = 0; col < GRID_COLS; col++) {
+				const TicTacToeSquare& ttts = ticTacToeSquares[(row * 3) + col];
+				board[row][col] = ttts.officiallySelected ? ttts.curOption : NEITHER;
+			}
 		}
-	}
 
-	winner = TicTacGrid::GetWinner(board);
+		winner = TicTacGrid::GetWinner(board);
+	}
 }
 
 void TicTacGrid::select() {
@@ -108,7 +128,7 @@ void TicTacGrid::deSelect() {
 	*/
 }
 
-void TicTacGrid::render(ShaderProgram& shaderProgram) {
+void TicTacGrid::render(ShaderProgram& shaderProgram, glm::mat4& projection, glm::mat4& view) {
 	glm::mat4 parentMat(1.0f);
 	if (selected) {
 		parentMat = glm::translate(parentMat, glm::vec3(0, ActiveYPosAdd, 0));
@@ -118,6 +138,21 @@ void TicTacGrid::render(ShaderProgram& shaderProgram) {
 		ticTacToeSquares[i].render(shaderProgram, parentMat);
 	}
 	shaderProgram.unbind();
+
+	if (winner != NEITHER) {
+		glm::mat4 winnerQuadMat = glm::translate(parentMat, glm::vec3(centerPos.x, 0.2f, centerPos.y));
+		winnerProgram.setMat4("projection", projection);
+		winnerProgram.setMat4("view", view);
+		winnerProgram.setMat4("model", winnerQuadMat);
+		winnerProgram.setInt("texUnit", winner);
+		winnerProgram.bind();
+		xTex.bind();
+		oTex.bind();
+		winnerQuad.render();
+		winnerProgram.unbind();
+		xTex.unbind();
+		oTex.unbind();
+	}
 }
 
 

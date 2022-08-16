@@ -12,8 +12,8 @@
 class TicTacGrid {
 public:
 	TicTacGrid(const glm::vec2& centerPos);
-	void update(const Input& input, int turn, bool pollInput);
-	void render(ShaderProgram& shaderProgram);
+	void update(const Input& input, int& turn, bool pollInput);
+	void render(ShaderProgram& shaderProgram, glm::mat4& projection, glm::mat4& view);
 
 	void select();
 	void deSelect();
@@ -28,10 +28,16 @@ public:
 	static bool GetWinnerCol(const char board[GRID_ROWS][GRID_COLS], int col);
 
 private:
+	glm::vec2 centerPos;
 	int selectedSquare = 0;
 	MeshRenderer* squareMeshRenderer = nullptr;
+	Model winnerQuad;
+	ShaderProgram winnerProgram;
 
 	uint32_t timeOfLastClick = 0;
 	static const uint32_t TimeBetweenClicks;
 	static const float ActiveYPosAdd;
+
+	Texture xTex;
+	Texture oTex;
 };

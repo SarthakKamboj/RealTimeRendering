@@ -17,7 +17,7 @@ class TicTacToeSquare {
 public:
 	TicTacToeSquare();
 	TicTacToeSquare(float posX, float posZ, MeshRenderer* _squareMeshRenderer);
-	void update(bool enterClicked, int turn);
+	void update(bool enterClicked, int& turn);
 	void render(ShaderProgram& shaderProgram, glm::mat4& parentMat);
 	void select();
 	void deSelect();

@@ -12,7 +12,7 @@ GridManager::GridManager() {
 	}
 }
 
-void GridManager::update(const Input& input, int turn) {
+void GridManager::update(const Input& input, int& turn) {
 
 	bool selectionChanged = false;
 	bool changedSelectionMode = false;
@@ -79,7 +79,6 @@ void GridManager::update(const Input& input, int turn) {
 		}
 	}
 
-	int winner = TicTacGrid::GetWinner(board);
 
 	if (gridSelectionMode) {
 		for (int i = 0; i < grids.size(); i++) {
@@ -90,10 +89,20 @@ void GridManager::update(const Input& input, int turn) {
 	else {
 		grids[activeGrid].update(input, turn, true);
 	}
+
+	int winner = TicTacGrid::GetWinner(board);
+	if (winner != NEITHER) {
+		if (winner == X) {
+			std::cout << "x wins" << std::endl;
+		}
+		else {
+			std::cout << "o wins" << std::endl;
+		}
+	}
 }
 
-void GridManager::render(ShaderProgram& shaderProgram) {
+void GridManager::render(ShaderProgram& shaderProgram, glm::mat4& projection, glm::mat4& view) {
 	for (TicTacGrid& grid : grids) {
-		grid.render(shaderProgram);
+		grid.render(shaderProgram, projection, view);
 	}
 }

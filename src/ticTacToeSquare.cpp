@@ -23,7 +23,7 @@ TicTacToeSquare::TicTacToeSquare(float posX, float posZ, MeshRenderer* _squareMe
 	squareMeshRenderer = _squareMeshRenderer;
 }
 
-void TicTacToeSquare::update(bool enterClicked, int turn) {
+void TicTacToeSquare::update(bool enterClicked, int& turn) {
 	if (selected) {
 		transform.pos.y = lerp(minY, maxY, relativeTime);
 		relativeTime += deltaTime / TicTacToeSquare::selectAnimTime;
@@ -41,6 +41,7 @@ void TicTacToeSquare::update(bool enterClicked, int turn) {
 		if (enterClicked) {
 			officiallySelected = true;
 			deSelect();
+			turn = (turn == X) ? Y : X;
 		}
 	}
 	else {

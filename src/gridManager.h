@@ -8,8 +8,8 @@
 
 struct GridManager {
 	GridManager();
-	void update(const Input& input, int turn);
-	void render(ShaderProgram& shaderProgram);
+	void update(const Input& input, int& turn);
+	void render(ShaderProgram& shaderProgram, glm::mat4& projection, glm::mat4& view);
 
 	std::vector<TicTacGrid> grids;
 	int activeGrid = NO_ACTIVE_GRID;
