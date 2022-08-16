@@ -49,7 +49,7 @@ GOAL: make code data oriented
 					- may be actual 3d objects
 					- may be simpler quads
 
-	- window
+	- window (done)
 		- create platform layer
 		- separate window initialization
 	
