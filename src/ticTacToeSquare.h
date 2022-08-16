@@ -8,8 +8,8 @@
 #define O_TEX_UNIT 4
 
 #define NEITHER -1
-#define X 0
-#define Y 1
+#define TTT_X 0
+#define TTT_Y 1
 
 float lerp(float from, float to, float time);
 

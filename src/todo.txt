@@ -1,0 +1,55 @@
+
+Cache sizes on my machine
+- L1: 384 KB - 6144 rows
+- L2: 1.5 MB
+- L3: 12.0 MB
+- i believe cache line sizes are 64 bytes
+
+TODO
+-----
+* should separate gameplay code from more low-level stuff 
+
+GOAL: make code data oriented
+- current systems
+	- renderer
+		- textures
+			- important data information
+				- texture unit (4 bytes)
+				- tex id (4 bytes)
+			- things to consider
+				- different models might use same texture
+				- different shader programs may have same texture in different tex units
+				- should try to reuse textures to save mem on GPU
+				- will be binded per 3d model
+		
+		- shader programs
+			- important data information
+				- shader prog id
+			- things to consider
+				- different categories of models will have 1 shader program
+	
+	- gameplay
+		- WILL COME BACK TO
+	
+	- assets
+		- 3d models
+			- important data information
+				- vertices (vao)
+				- indicies (ebo)
+			- things to consider
+				- some have vao and ebo
+				- some have only vao
+				- some have textures associated with them	
+				- will iterate over every model every frame so cache data here is hot
+				- proj and view matricies same for all, model mat changes, will also be hot data
+				- size of mat is 64 bytes and vao is basically just 4 byte int
+					- should separate these two to lower cache misses since at least vao can be 
+					accessed w/out cache misses
+				- types of models (require different shader programs)
+					- may be actual 3d objects
+					- may be simpler quads
+
+	- window
+		- create platform layer
+		- separate window initialization
+	

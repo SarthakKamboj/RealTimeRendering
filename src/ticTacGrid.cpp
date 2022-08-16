@@ -107,25 +107,11 @@ void TicTacGrid::update(const Input& input, int& turn, bool pollInput) {
 void TicTacGrid::select() {
 	selected = true;
 	ticTacToeSquares[selectedSquare].deSelect();
-	/*
-	for (int i = 0; i < ticTacToeSquares.size(); i++) {
-		ticTacToeSquares[i].transform.pos.y += ActiveYPosAdd;
-		ticTacToeSquares[i].minY += ActiveYPosAdd;
-		ticTacToeSquares[i].maxY += ActiveYPosAdd;
-	}
-	*/
 }
 
 void TicTacGrid::deSelect() {
 	selected = false;
 	ticTacToeSquares[selectedSquare].deSelect();
-	/*
-	for (int i = 0; i < ticTacToeSquares.size(); i++) {
-		ticTacToeSquares[i].transform.pos.y -= ActiveYPosAdd;
-		ticTacToeSquares[i].minY -= ActiveYPosAdd;
-		ticTacToeSquares[i].maxY -= ActiveYPosAdd;
-	}
-	*/
 }
 
 void TicTacGrid::render(ShaderProgram& shaderProgram, glm::mat4& projection, glm::mat4& view) {

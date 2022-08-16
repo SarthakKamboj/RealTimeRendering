@@ -1,10 +1,6 @@
 #include <iostream>
 #include <vector>
 #include "SDL.h"
-#include "glad/glad.h"
-#include "imgui_impl_opengl3.h"
-#include "imgui_impl_sdl.h"
-#include "imgui.h"
 #include "input.h"
 #include "loadModel.h"
 #include "renderer/shaderProgram.h"
@@ -22,6 +18,7 @@
 #include "ticTacToeSquare.h"
 #include "ticTacGrid.h"
 #include "gridManager.h"
+#include "window.h"
 
 float deltaTime = 0.0f;
 uint32_t curTimeMs;
@@ -61,53 +58,7 @@ void lightPassFb(LightFrameBuffer& fb, glm::mat4& lightView, glm::mat4& lightPro
 
 int main(int argc, char* args[]) {
 
-	if (SDL_Init(SDL_INIT_EVERYTHING) < 0) {
-		std::cout << "sdl gave error" << std::endl;
-		return 1;
-	}
-
-	// set opengl attributes through sdl
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
-	SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
-
-	uint32_t windowFlags = SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE;
-	SDL_Window* window = SDL_CreateWindow("window", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height, windowFlags);
-
-	SDL_GLContext context = SDL_GL_CreateContext(window);
-
-	SDL_GL_MakeCurrent(window, context);
-	gladLoadGLLoader(SDL_GL_GetProcAddress);
-
-	glDepthFunc(GL_LESS);
-	glEnable(GL_DEPTH_TEST);
-	glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
-	glFrontFace(GL_CCW);
-	glCullFace(GL_BACK);
-
-	// set up ImGUi
-	IMGUI_CHECKVERSION();
-	ImGui::CreateContext();
-	ImGuiIO& io = ImGui::GetIO(); (void)io;
-	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-	io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
-
-	ImGui::StyleColorsDark();
-
-	ImGuiStyle& style = ImGui::GetStyle();
-	if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
-	{
-		style.WindowRounding = 0.0f;
-		style.Colors[ImGuiCol_WindowBg].w = 1.0f;
-	}
-
-	ImGui_ImplSDL2_InitForOpenGL(window, context);
-	const char* glslVersion = "#version 330";
-	ImGui_ImplOpenGL3_Init(glslVersion);
+	window_t window(800, 600);
 
 	const std::string vertPath = "C:\\Sarthak\\programming\\RealTimeRendering\\src\\shaders\\default.vert";
 	const std::string fragPath = "C:\\Sarthak\\programming\\RealTimeRendering\\src\\shaders\\default.frag";
@@ -129,9 +80,7 @@ int main(int argc, char* args[]) {
 	Texture xTex(xPath.c_str(), X_TEX_UNIT);
 	Texture oTex(oPath.c_str(), O_TEX_UNIT);
 
-	Input input;
 	bool running = true;
-
 	uint32_t prev = SDL_GetTicks();
 
 	glm::vec3 pointLightColor(1, 0, 0);
@@ -173,7 +122,7 @@ int main(int argc, char* args[]) {
 
 	int pcfLayers = 2;
 
-	int turn = X;
+	int turn = TTT_X;
 
 	int TARGET_FPS = 60;
 	float secPerFrame = 1.0f / TARGET_FPS;
@@ -189,47 +138,12 @@ int main(int argc, char* args[]) {
 		}
 		prev = curTimeMs;
 
-		SDL_Event event;
-		memset(&input, 0, sizeof(Input));
-		while (SDL_PollEvent(&event)) {
-			ImGui_ImplSDL2_ProcessEvent(&event);
-			if (event.type == SDL_QUIT) {
-				running = false;
-			}
-			if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE && event.window.windowID == SDL_GetWindowID(window)) {
-				running = false;
-			}
-			if (event.type == SDL_KEYDOWN) {
-				SDL_Keycode keyDown = event.key.keysym.sym;
-				if (keyDown == SDLK_RETURN) {
-					input.enter = true;
-				}
-				else if (keyDown == SDLK_RIGHT) {
-					input.rightArrow = true;
-				}
-				else if (keyDown == SDLK_LEFT) {
-					input.leftArrow = true;
-				}
-				else if (keyDown == SDLK_UP) {
-					input.upArrow = true;
-				}
-				else if (keyDown == SDLK_DOWN) {
-					input.downArrow = true;
-				}
-				else if (keyDown == SDLK_SLASH) {
-					input.slash = true;
-				}
-				else if (keyDown == SDLK_ESCAPE) {
-					running = false;
-				}
-			}
-		}
+		Input input{};
+		window.poll(input);
+
+		running = !(input.quit || input.escape);
 
 		gridManager.update(input, turn);
-
-		// if (input.enter) {
-			// turn = (turn == X) ? Y : X;
-		// }
 
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplSDL2_NewFrame();
@@ -331,20 +245,8 @@ int main(int argc, char* args[]) {
 		ImGui::ColorPicker3("color", &spotLight.color.r);
 		ImGui::End();
 
-		glViewport(0, 0, (int)io.DisplaySize.x, (int)io.DisplaySize.y);
-		ImGui::Render();
-		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+		window.swap();
 
-		if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
-		{
-			// handles the multiple windows created by ImGui
-			SDL_Window* backupCurrentWindow = SDL_GL_GetCurrentWindow();
-			SDL_GLContext backupCurrentContext = SDL_GL_GetCurrentContext();
-			ImGui::UpdatePlatformWindows();
-			ImGui::RenderPlatformWindowsDefault();
-			SDL_GL_MakeCurrent(backupCurrentWindow, backupCurrentContext);
-		}
-		SDL_GL_SwapWindow(window);
 	}
 
 	return -1;

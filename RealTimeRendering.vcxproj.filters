@@ -96,6 +96,9 @@
     <ClCompile Include="src\gridManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\window.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="SDL2.dll" />
@@ -201,5 +204,11 @@
     <ClInclude Include="src\gridManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\window.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="src\todo.txt" />
   </ItemGroup>
 </Project>

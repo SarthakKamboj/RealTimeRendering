@@ -92,7 +92,7 @@ void GridManager::update(const Input& input, int& turn) {
 
 	int winner = TicTacGrid::GetWinner(board);
 	if (winner != NEITHER) {
-		if (winner == X) {
+		if (winner == TTT_X) {
 			std::cout << "x wins" << std::endl;
 		}
 		else {

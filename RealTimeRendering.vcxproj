@@ -182,6 +182,7 @@
     <ClCompile Include="src\ticTacGrid.cpp" />
     <ClCompile Include="src\ticTacToeSquare.cpp" />
     <ClCompile Include="src\transform.cpp" />
+    <ClCompile Include="src\window.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="SDL2.dll" />
@@ -227,6 +228,10 @@
     <ClInclude Include="src\ticTacGrid.h" />
     <ClInclude Include="src\ticTacToeSquare.h" />
     <ClInclude Include="src\transform.h" />
+    <ClInclude Include="src\window.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="src\todo.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

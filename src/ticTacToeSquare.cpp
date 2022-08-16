@@ -37,11 +37,11 @@ void TicTacToeSquare::update(bool enterClicked, int& turn) {
 
 	if (selected) {
 		curOptionTex = X_TEX_UNIT + turn;
-		curOption = X + turn;
+		curOption = TTT_X + turn;
 		if (enterClicked) {
 			officiallySelected = true;
 			deSelect();
-			turn = (turn == X) ? Y : X;
+			turn = (turn == TTT_X) ? TTT_Y : TTT_X;
 		}
 	}
 	else {
