@@ -105,6 +105,9 @@
     <ClCompile Include="src\model.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\helper.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="SDL2.dll" />
@@ -118,6 +121,8 @@
     <None Include="src\shaders\lightDepthRender.frag" />
     <None Include="src\shaders\quadTexture.frag" />
     <None Include="src\shaders\quadTexture.vert" />
+    <None Include="src\shaders\test.vert" />
+    <None Include="src\shaders\test.frag" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\input.h">
@@ -220,6 +225,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\model.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\helper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -18,33 +18,35 @@ TicTacToeSquare::TicTacToeSquare(float posX, float posZ, shader_program_t& shade
 	maxY = 0.25f;
 
 	std::string selectionModelPath = "C:\\Sarthak\\programming\\RealTimeRendering\\src\\assets\\selection.obj";
+
 	std::string selectionTexPath = "C:\\Sarthak\\programming\\RealTimeRendering\\src\\assets\\selection.png";
+	std::string xPath = "C:\\Sarthak\\programming\\RealTimeRendering\\src\\assets\\x.png";
+	std::string oPath = "C:\\Sarthak\\programming\\RealTimeRendering\\src\\assets\\o.png";
+
 	models_manager_t& models_manager = globals.default_shader_program->models_manager;
-	model_idx = load_model(models_manager, selectionModelPath);
+	model_idx = load_model(*globals.default_shader_program, selectionModelPath);
 	attach_texture_to_model(models_manager, selectionTexPath, model_idx, 0);
-	// modelIdx = load_model(shaderProgram.models, selectionModelPath);
+	attach_texture_to_model(models_manager, xPath, model_idx, 1);
+	attach_texture_to_model(models_manager, oPath, model_idx, 2);
 
 	transform_t& model_transform = models_manager.transforms[model_idx];
-	std::cout << model_idx << std::endl;
 
 	model_transform.pos.x = posX;
 	model_transform.pos.z = posZ;
 	model_transform.pos.y = minY;
 	model_transform.scale = 0.25f;
-
-	transform = &model_transform;
 }
 
 void TicTacToeSquare::update(bool enterClicked, int& turn) {
 
-	transform = &globals.default_shader_program->models_manager.transforms[model_idx];
+	transform_t& transform = globals.default_shader_program->models_manager.transforms[model_idx];
 
 	if (selected) {
-		transform->pos.y = lerp(minY, maxY, relativeTime);
+		transform.pos.y = lerp(minY, maxY, relativeTime);
 		relativeTime += deltaTime / TicTacToeSquare::selectAnimTime;
 	}
-	else if (transform->pos.y != minY) {
-		transform->pos.y = lerp(maxY, minY, relativeTime);
+	else if (transform.pos.y != minY) {
+		transform.pos.y = lerp(maxY, minY, relativeTime);
 		relativeTime += deltaTime / TicTacToeSquare::selectAnimTime;
 	}
 
@@ -52,6 +54,8 @@ void TicTacToeSquare::update(bool enterClicked, int& turn) {
 
 	if (selected) {
 		curOptionTex = X_TEX_UNIT + turn;
+		globals.default_shader_program->shader_parameters[model_idx]["selected_tex"] = turn + 1;
+		globals.default_shader_program->shader_parameters[model_idx]["selected"] = 1;
 		curOption = TTT_X + turn;
 		if (enterClicked) {
 			officiallySelected = true;
@@ -63,6 +67,8 @@ void TicTacToeSquare::update(bool enterClicked, int& turn) {
 		if (!officiallySelected) {
 			curOptionTex = NEITHER;
 			curOption = NEITHER;
+
+			globals.default_shader_program->shader_parameters[model_idx]["selected"] = 0;
 		}
 	}
 }
@@ -82,11 +88,13 @@ void TicTacToeSquare::render(shader_program_t& shaderProgram, glm::mat4& parentM
 */
 
 void TicTacToeSquare::select() {
+	transform_t& transform = globals.default_shader_program->models_manager.transforms[model_idx];
 	selected = true;
-	relativeTime = (transform->pos.y - minY) / (maxY - minY);
+	relativeTime = (transform.pos.y - minY) / (maxY - minY);
 }
 
 void TicTacToeSquare::deSelect() {
+	transform_t& transform = globals.default_shader_program->models_manager.transforms[model_idx];
 	selected = false;
-	relativeTime = 1.0f - ((transform->pos.y - minY) / (maxY - minY));
+	relativeTime = 1.0f - ((transform.pos.y - minY) / (maxY - minY));
 }

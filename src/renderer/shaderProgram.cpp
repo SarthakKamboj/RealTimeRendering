@@ -5,19 +5,19 @@
 
 extern globals_t globals;
 
-void create_shader_program(shader_program_t& shader_program, const std::string& vertex_path, const std::string& fragment_path) {
+shader_program_t::shader_program_t(const std::string& vertex_path, const std::string& fragment_path, const std::vector<std::string>& _parameter_names) {
+
 	GLuint vertex_id = create_shader(vertex_path, GL_VERTEX_SHADER);
 	if (vertex_id == -1) {
-		shader_program.program_id = -1;
+		program_id = -1;
 		return;
 	}
 	GLuint frag_id = create_shader(fragment_path, GL_FRAGMENT_SHADER);
 	if (frag_id == -1) {
-		shader_program.program_id = -1;
+		program_id = -1;
 		return;
 	}
-	shader_program.program_id = glCreateProgram();
-	GLuint& program_id = shader_program.program_id;
+	program_id = glCreateProgram();
 
 	glAttachShader(program_id, vertex_id);
 	glAttachShader(program_id, frag_id);
@@ -25,9 +25,22 @@ void create_shader_program(shader_program_t& shader_program, const std::string& 
 
 	glDeleteShader(vertex_id);
 	glDeleteShader(frag_id);
+
+	parameter_names.resize(_parameter_names.size());
+	for (const std::string& name : _parameter_names) {
+		parameter_names.push_back(name);
+	}
 }
 
-GLuint create_shader(const std::string& path, GLenum shader_type) {
+void shader_program_t::add_shader_parameters_map() {
+	shader_parameters.push_back(std::map<std::string, int>());
+	auto& map = shader_parameters[shader_parameters.size() - 1];
+	for (const std::string& name : parameter_names) {
+		map[name] = 0;
+	}
+}
+
+GLuint shader_program_t::create_shader(const std::string& path, GLenum shader_type) {
 	// get shader file contents
 	std::string line, file_contents;
 	std::ifstream file(path.c_str());
@@ -62,7 +75,7 @@ void shader_program_t::set_mat_4(const char* var_name, const glm::mat4& mat) {
 	bind();
 	GLint loc = glGetUniformLocation(program_id, var_name);
 	if (loc == -1) {
-		std::cout << var_name << " doesn't exist" << std::endl;
+		// std::cout << var_name << " doesn't exist" << std::endl;
 	}
 	glUniformMatrix4fv(loc, 1, GL_FALSE, glm::value_ptr(mat));
 	unbind();
@@ -73,7 +86,7 @@ void shader_program_t::set_float(const char* var_name, float val) {
 	bind();
 	GLint loc = glGetUniformLocation(program_id, var_name);
 	if (loc == -1) {
-		std::cout << var_name << " doesn't exist" << std::endl;
+		// std::cout << var_name << " doesn't exist" << std::endl;
 	}
 	glUniform1f(loc, val);
 	unbind();
@@ -84,7 +97,7 @@ void shader_program_t::set_vec3(const char* var_name, const glm::vec3& vec3) {
 	bind();
 	GLint loc = glGetUniformLocation(program_id, var_name);
 	if (loc == -1) {
-		std::cout << var_name << " doesn't exist" << std::endl;
+		// std::cout << var_name << " doesn't exist" << std::endl;
 	}
 	glUniform3fv(loc, 1, glm::value_ptr(vec3));
 	unbind();
@@ -95,7 +108,7 @@ void shader_program_t::set_int(const char* var_name, int val) {
 	bind();
 	GLint loc = glGetUniformLocation(program_id, var_name);
 	if (loc == -1) {
-		std::cout << var_name << " doesn't exist" << std::endl;
+		// std::cout << var_name << " doesn't exist" << std::endl;
 	}
 	glUniform1i(loc, val);
 	unbind();
@@ -118,6 +131,14 @@ void shader_program_t::render_models() {
 		glm::mat4 model_mat(1.0f);
 		transforms[i].get_model_matrix(model_mat);
 		set_mat_4("model", model_mat);
+
+		for (const std::pair<std::string, int>& elem : shader_parameters[i]) {
+			if (elem.first == "selected" && elem.second == 1) {
+				std::cout << "selected registered" << std::endl;
+			}
+			set_int(elem.first.c_str(), elem.second);
+		}
+
 		bind();
 
 		int model_vert_idx = models_manager.model_vertex_idxs[i];

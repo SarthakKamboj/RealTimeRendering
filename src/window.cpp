@@ -96,6 +96,7 @@ void window_t::poll(Input& input) {
 }
 
 void window_t::swap() {
+	/*
 	glViewport(0, 0, (int)io.DisplaySize.x, (int)io.DisplaySize.y);
 	ImGui::Render();
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -109,5 +110,6 @@ void window_t::swap() {
 		ImGui::RenderPlatformWindowsDefault();
 		SDL_GL_MakeCurrent(backupCurrentWindow, backupCurrentContext);
 	}
+	*/
 	SDL_GL_SwapWindow(sdl_win);
 }

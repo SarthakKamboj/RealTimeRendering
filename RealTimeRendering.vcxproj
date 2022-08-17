@@ -166,6 +166,7 @@
     <ClCompile Include="ext\stb\stb_image.cpp" />
     <ClCompile Include="ext\tinyobjloader\tiny_obj_loader.cpp" />
     <ClCompile Include="src\gridManager.cpp" />
+    <ClCompile Include="src\helper.cpp" />
     <ClCompile Include="src\lights\directionalLight.cpp" />
     <ClCompile Include="src\lights\spotLight.cpp" />
     <ClCompile Include="src\loadModel.cpp" />
@@ -198,6 +199,8 @@
     <None Include="src\shaders\lightPass.vert" />
     <None Include="src\shaders\quadTexture.frag" />
     <None Include="src\shaders\quadTexture.vert" />
+    <None Include="src\shaders\test.frag" />
+    <None Include="src\shaders\test.vert" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ext\glad\include\glad\glad.h" />
@@ -214,6 +217,7 @@
     <ClInclude Include="ext\tinyobjloader\tiny_obj_loader.h" />
     <ClInclude Include="src\globals.h" />
     <ClInclude Include="src\gridManager.h" />
+    <ClInclude Include="src\helper.h" />
     <ClInclude Include="src\input.h" />
     <ClInclude Include="src\lights\directionalLight.h" />
     <ClInclude Include="src\lights\pointLight.h" />

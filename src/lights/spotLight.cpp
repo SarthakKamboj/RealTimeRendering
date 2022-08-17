@@ -12,8 +12,10 @@ spot_light_t::spot_light_t(const glm::vec3& _color, const glm::vec3& _position, 
 
 	const std::string vertPath = "C:\\Sarthak\\programming\\RealTimeRendering\\src\\shaders\\lightDebug.vert";
 	const std::string fragPath = "C:\\Sarthak\\programming\\RealTimeRendering\\src\\shaders\\lightDebug.frag";
+	const std::vector<std::string> parameters;
 
-	create_shader_program(shader_program, vertPath, fragPath);
+	shader_program = shader_program_t(vertPath, fragPath, parameters);
+	// create_shader_program(shader_program, vertPath, fragPath);
 
 	std::string cubePath = "C:\\Sarthak\\programming\\RealTimeRendering\\src\\assets\\cube.obj";
 }

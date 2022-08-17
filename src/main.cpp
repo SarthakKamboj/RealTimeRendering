@@ -23,6 +23,7 @@
 #include "renderer/texture_manager.h"
 #include "model.h"
 #include "renderer/shaderProgram.h"
+#include "helper.h"
 
 float deltaTime = 0.0f;
 uint32_t curTimeMs;
@@ -78,15 +79,16 @@ globals_t globals;
 
 int main(int argc, char* args[]) {
 
-	window_t window(800, 600);
+	window_t window(width, height);
 
 	texture_manager_t texture_manager{};
 	globals.texture_manager = &texture_manager;
 
 	const std::string default_vert_path = "C:\\Sarthak\\programming\\RealTimeRendering\\src\\shaders\\default.vert";
 	const std::string default_frag_path = "C:\\Sarthak\\programming\\RealTimeRendering\\src\\shaders\\default.frag";
-	shader_program_t default_shader_program{};
-	create_shader_program(default_shader_program, default_vert_path, default_frag_path);
+	const std::vector<std::string> parameters = { "selected_tex", "selected" };
+	shader_program_t default_shader_program(default_vert_path, default_frag_path, parameters);
+	// create_shader_program(default_shader_program, default_vert_path, default_frag_path);
 	globals.default_shader_program = &default_shader_program;
 
 	models_data_t models_data{};
@@ -122,8 +124,8 @@ int main(int argc, char* args[]) {
 
 	const std::string light_pass_vert_path = "C:\\Sarthak\\programming\\RealTimeRendering\\src\\shaders\\lightPass.vert";
 	const std::string light_pass_frag_path = "C:\\Sarthak\\programming\\RealTimeRendering\\src\\shaders\\lightPass.frag";
-	shader_program_t light_pass_program{};
-	create_shader_program(light_pass_program, light_pass_vert_path, light_pass_frag_path);
+	const std::vector<std::string> light_parameters;
+	shader_program_t light_pass_program(light_pass_vert_path, light_pass_frag_path, light_parameters);
 
 	int pcfLayers = 2;
 	int turn = TTT_X;
@@ -149,9 +151,11 @@ int main(int argc, char* args[]) {
 
 		grid_manager.update(input, turn);
 
+		/*
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplSDL2_NewFrame();
 		ImGui::NewFrame();
+		*/
 
 		glm::vec3 camPos(radius * cos(glm::radians(angle)), yPos, radius * sin(glm::radians(angle)));
 		glm::mat4 camView = glm::lookAt(camPos, lookAt, glm::vec3(0, 1, 0));
@@ -203,6 +207,7 @@ int main(int argc, char* args[]) {
 		spot_light.set_spot_light_in_shader_prog(default_shader_program, 0);
 
 		default_shader_program.set_int("pcfLayers", pcfLayers);
+		default_shader_program.set_int("base_color_tex", 0);
 		default_shader_program.render_models();
 
 		// gridManager.render(default_shader_program, perspProj, camView);

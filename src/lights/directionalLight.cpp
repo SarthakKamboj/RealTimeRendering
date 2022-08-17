@@ -7,7 +7,9 @@ dir_light_t::dir_light_t(const glm::vec3& _color, const glm::vec3& _dir, float _
 
 	const std::string vertPath = "C:\\Sarthak\\programming\\RealTimeRendering\\src\\shaders\\lightDebug.vert";
 	const std::string fragPath = "C:\\Sarthak\\programming\\RealTimeRendering\\src\\shaders\\lightDebug.frag";
-	create_shader_program(shader_program, vertPath, fragPath);
+	const std::vector<std::string> parameters;
+	shader_program = shader_program_t(vertPath, fragPath, parameters);
+	// create_shader_program(shader_program, vertPath, fragPath);
 	// shader_program = ShaderProgram(vertPath.c_str(), fragPath.c_str());
 
 	std::string cubePath = "C:\\Sarthak\\programming\\RealTimeRendering\\src\\assets\\arrow.obj";

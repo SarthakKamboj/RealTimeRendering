@@ -1,6 +1,7 @@
 #include "model.h"
 #include <glm/gtx/hash.hpp>
 #include "globals.h"
+#include "renderer/shaderProgram.h"
 
 extern globals_t globals;
 
@@ -24,9 +25,10 @@ namespace std {
 	};
 };
 
-int load_model(models_manager_t& model_manager, const std::string& file_path) {
+int load_model(shader_program_t& shader_program, const std::string& file_path) {
 
 	models_data_t& models_data = *globals.models_data;
+	models_manager_t& model_manager = shader_program.models_manager;
 	std::vector<std::string>& file_paths = globals.models_data->file_paths;
 	const std::vector<std::string>::iterator path_it = std::find(file_paths.begin(), file_paths.end(), file_path);
 	if (path_it != file_paths.cend()) {
@@ -38,6 +40,7 @@ int load_model(models_manager_t& model_manager, const std::string& file_path) {
 		model_manager.model_textures_data.push_back(std::vector<texture_bind_data_t>());
 		model_manager.model_vertex_idxs.push_back(model_idx);
 
+		shader_program.add_shader_parameters_map();
 		return model_manager.model_textures_data.size() - 1;
 	}
 
@@ -119,6 +122,8 @@ int load_model(models_manager_t& model_manager, const std::string& file_path) {
 
 	model_manager.model_textures_data.push_back(std::vector<texture_bind_data_t>());
 	model_manager.model_vertex_idxs.push_back(model_vert_idx);
+
+	shader_program.add_shader_parameters_map();
 
 	return model_manager.model_textures_data.size() - 1;
 }

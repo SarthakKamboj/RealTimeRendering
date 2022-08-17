@@ -28,5 +28,6 @@ struct models_data_t {
 	std::vector<std::string> file_paths;
 };
 
-int load_model(models_manager_t& model_manager, const std::string& file_path);
+struct shader_program_t;
+int load_model(shader_program_t& shader_program, const std::string& file_path);
 void attach_texture_to_model(models_manager_t& model_manager, const std::string file_path, int model_idx, unsigned int tex_unit);

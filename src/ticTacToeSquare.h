@@ -25,7 +25,6 @@ public:
 
 	// Transform transform;
 	bool selected = false;
-	transform_t* transform;
 
 	bool officiallySelected = false;
 	int curOption = NEITHER;

@@ -4,19 +4,19 @@
 extern globals_t globals;
 
 int add_texture(texture_manager_t& texture_manager, const std::string& file_path) {
-	
-	const std::vector<std::string>::iterator path_it = std::find(texture_manager.tex_paths.begin(), texture_manager.tex_paths.begin(), file_path);
+
+	const std::vector<std::string>::iterator path_it = std::find(texture_manager.tex_paths.begin(), texture_manager.tex_paths.end(), file_path);
 
 	if (path_it != texture_manager.tex_paths.cend()) {
 		int idx = std::distance(texture_manager.tex_paths.begin(), path_it);
 		return texture_manager.texture_ids[idx];
 	}
-	
+
 	stbi_set_flip_vertically_on_load(true);
 
 	// load image data
 	int img_width, img_height, num_channels;
-	unsigned char* data = stbi_load(file_path.c_str(), &img_width, &img_height, &num_channels, 0);	
+	unsigned char* data = stbi_load(file_path.c_str(), &img_width, &img_height, &num_channels, 0);
 
 	unsigned int texture_id;
 	glGenTextures(1, &texture_id);

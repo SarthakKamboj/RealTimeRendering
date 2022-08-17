@@ -2,10 +2,10 @@
 
 out vec4 FragColor;
 
-uniform sampler2D tex;
-uniform sampler2D imgTex;
+uniform sampler2D base_color_tex;
+uniform sampler2D selected_tex;
 uniform int pcfLayers;
-uniform int chosenMultiplier;
+uniform int selected;
 
 in vec2 texCoords;
 in vec3 normal;
@@ -115,7 +115,6 @@ vec4 pcf(vec2 shadowUv, sampler2D shadowDepthTex, float depthVal) {
 			}
 		}
 	}
-	// float shadowVal = float(runningShadowVal) / float(max(numTexelsEvaluated, 1));
 	int totalNumTexels = (2*pcfLayers + 1) * (2*pcfLayers + 1);
 	float shadowVal = float(runningShadowVal) / float(totalNumTexels);
 	return vec4(shadowVal, shadowVal, shadowVal, 1);
@@ -126,32 +125,15 @@ vec4 shadowVec(sampler2D texUnit, mat4 lightProj, mat4 lightView) {
 	lightRelPos /= lightRelPos.w;
 	vec2 lightDepthUv = vec2(ndcToTex(lightRelPos.x), ndcToTex(lightRelPos.y));
 
-	/*
-	if (lightDepthUv.x < 0 || lightDepthUv.x > 1 || lightDepthUv.y < 0 || lightDepthUv.y > 1) {
-		return vec4(0,0,0,1);	
-	}
-	*/
-
 	float depthVal = ndcToTex(lightRelPos.z);
 	return pcf(lightDepthUv, texUnit, depthVal);
-
-	// float closestZVal = texture(texUnit, lightDepthUv).x;
-
-	/*
-	if (depthVal - 0.0025 > closestZVal) {
-		return vec4(0,0,0,1);	
-	}
-	// return vec4(1,1,1,1);
-	*/
 }
 
 void main() {
 
-	FragColor = vec4(0,0,1,1);
-	return;
+	vec4 surfaceColor = texture(base_color_tex, texCoords);
 
-	vec4 surfaceColor = texture(tex, texCoords);
-	vec4 selected = texture(imgTex, texCoords) * vec4(chosenMultiplier,chosenMultiplier,chosenMultiplier,chosenMultiplier);
+	vec4 selected = texture(selected_tex, texCoords) * vec4(selected, selected, selected, 1);
 	FragColor = ((surfaceColor * selected) + vec4(1,0,0,1)) * 0.1;
 	FragColor = ((surfaceColor * selected * 0.5) + 0.4) + vec4(1,0,0,1);
 

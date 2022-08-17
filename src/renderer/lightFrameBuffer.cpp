@@ -2,6 +2,7 @@
 #include "glad/glad.h"
 #include <iostream>
 #include "glm/gtc/type_ptr.hpp"
+#include "helper.h"
 
 extern int width, height;
 
@@ -27,7 +28,7 @@ light_frame_buffer_t::light_frame_buffer_t() {
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depth_tex, 0);
 
 	glBindTexture(GL_TEXTURE_2D, 0);
-	glBindBuffer(GL_FRAMEBUFFER, 0);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 void light_frame_buffer_t::bind() {

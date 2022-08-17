@@ -8,7 +8,9 @@ point_light_t::point_light_t(const glm::vec3& _color, const glm::vec3& _position
 
 	const std::string vertPath = "C:\\Sarthak\\programming\\RealTimeRendering\\src\\shaders\\lightDebug.vert";
 	const std::string fragPath = "C:\\Sarthak\\programming\\RealTimeRendering\\src\\shaders\\lightDebug.frag";
-	create_shader_program(shader_program, vertPath, fragPath);
+	// create_shader_program(shader_program, vertPath, fragPath);
+	const std::vector<std::string> parameters;
+	shader_program = shader_program_t(vertPath, fragPath, parameters);
 	// shaderProgram = ShaderProgram(vertPath.c_str(), fragPath.c_str());
 
 	std::string cubePath = "C:\\Sarthak\\programming\\RealTimeRendering\\src\\assets\\cube.obj";
